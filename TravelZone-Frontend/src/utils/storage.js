@@ -1,18 +1,14 @@
-export const saveAuth = (token, user) => {
-  localStorage.setItem("token", token);
-  localStorage.setItem("user", JSON.stringify(user));
+const AUTH_KEY = "travelzone_auth";
+
+export const saveAuth = (data) => {
+  localStorage.setItem(AUTH_KEY, JSON.stringify(data));
+};
+
+export const getAuth = () => {
+  const raw = localStorage.getItem(AUTH_KEY);
+  return raw ? JSON.parse(raw) : null;
 };
 
 export const clearAuth = () => {
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
-};
-
-export const getStoredUser = () => {
-  const user = localStorage.getItem("user");
-  return user ? JSON.parse(user) : null;
-};
-
-export const getStoredToken = () => {
-  return localStorage.getItem("token");
+  localStorage.removeItem(AUTH_KEY);
 };
