@@ -34,18 +34,18 @@ function AppRouter() {
         <Route index element={<DashboardHome />} />
         <Route path="profile" element={<ProfilePage />} />
 
-        {/* Tourist */}
+        {/* ✅ Tourist routes */}
         <Route path="guides" element={<GuidesPage />} />
         <Route path="guides/:guideId" element={<GuideDetailPage />} />
         <Route path="hotels" element={<HotelsPage />} />
         <Route path="hotels/:hotelId" element={<HotelDetailPage />} />
         <Route path="bookings" element={<MyBookingsPage />} />
 
-        {/* Guide */}
+        {/* ✅ Guide routes — must NOT conflict with /guides/:guideId */}
         <Route path="guide-profile" element={<GuideProfilePage />} />
         <Route path="guide-bookings" element={<GuideBookingRequestsPage />} />
 
-        {/* Hotel Owner */}
+        {/* ✅ Hotel Owner routes */}
         <Route path="my-hotels" element={<MyHotelsPage />} />
         <Route path="rooms" element={<ManageRoomsPage />} />
       </Route>
