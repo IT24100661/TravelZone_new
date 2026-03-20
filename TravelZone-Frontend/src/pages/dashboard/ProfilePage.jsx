@@ -1,11 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../auth/AuthContext";
 import api from "../../api/axios";
 import { User, Mail, Phone, FileText, Save, Trash2 } from "lucide-react";
+import ImageUpload from "../../components/ui/ImageUpload";
 
 function ProfilePage() {
   const { user, logout } = useAuth();
   const [form, setForm] = useState({ name: "", phone: "", bio: "", profilePicture: "" });
+  const [photoPreview, setPhotoPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
@@ -19,6 +21,10 @@ function ProfilePage() {
         bio: res.data.bio || "",
         profilePicture: res.data.profilePicture || "",
       });
+      // If there's an existing photo (Base64 or URL), show it as preview
+      if (res.data.profilePicture) {
+        setPhotoPreview(res.data.profilePicture);
+      }
     });
   }, [user?.id]);
 
@@ -55,9 +61,17 @@ function ProfilePage() {
 
       {/* Avatar card */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl p-6 mb-6 flex items-center gap-5 shadow-lg">
-        <div className="w-16 h-16 rounded-2xl bg-white/20 border-2 border-white/30 flex items-center justify-center text-white text-3xl font-bold">
-          {form.name?.charAt(0)?.toUpperCase() || "U"}
-        </div>
+        {photoPreview ? (
+          <img
+            src={photoPreview}
+            alt="Profile"
+            className="w-16 h-16 rounded-2xl object-cover border-2 border-white/30 shadow"
+          />
+        ) : (
+          <div className="w-16 h-16 rounded-2xl bg-white/20 border-2 border-white/30 flex items-center justify-center text-white text-3xl font-bold">
+            {form.name?.charAt(0)?.toUpperCase() || "U"}
+          </div>
+        )}
         <div>
           <h2 className="text-white text-xl font-bold">{form.name}</h2>
           <p className="text-blue-200 text-sm">{user?.email}</p>
@@ -137,16 +151,21 @@ function ProfilePage() {
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Profile Picture URL</label>
-            <input
-              name="profilePicture"
-              value={form.profilePicture}
-              onChange={handleChange}
-              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition text-sm"
-              placeholder="https://example.com/photo.jpg"
-            />
-          </div>
+          {/* ✅ File picker replaces URL input */}
+          <ImageUpload
+            label="Profile Picture"
+            preview={photoPreview}
+            onChange={(base64) => {
+              setPhotoPreview(base64);
+              setForm((p) => ({ ...p, profilePicture: base64 }));
+            }}
+            onClear={() => {
+              setPhotoPreview(null);
+              setForm((p) => ({ ...p, profilePicture: "" }));
+            }}
+            setError={setError}
+            maxMB={2}
+          />
 
           <div className="flex gap-3 pt-2">
             <button
