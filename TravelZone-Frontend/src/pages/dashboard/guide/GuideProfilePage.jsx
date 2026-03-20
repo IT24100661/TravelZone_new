@@ -1,29 +1,64 @@
 import { useEffect, useState } from "react";
 import api from "../../../api/axios";
-import { MapPin, DollarSign, BookOpen, Plus, X, CheckCircle, Upload } from "lucide-react";
+import {
+  MapPin, DollarSign, BookOpen, Plus, X,
+  CheckCircle, Upload, Pencil, Trash2, Save, AlertCircle
+} from "lucide-react";
 import ImageUpload from "../../../components/ui/ImageUpload";
 
 function GuideProfilePage() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [mode, setMode] = useState("view");         // "view" | "edit" | "create"
   const [submitting, setSubmitting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
   const [langInput, setLangInput] = useState("");
   const [photoPreview, setPhotoPreview] = useState(null);
 
-  const [form, setForm] = useState({
-    experienceYears: "",
-    languages: [],
-    pricePerDay: "",
-    location: "",
-    bio: "",
-    profilePhoto: "",
-  });
+  const emptyForm = {
+    experienceYears: "", languages: [], pricePerDay: "",
+    location: "", bio: "", profilePhoto: "",
+  };
+  const [form, setForm] = useState(emptyForm);
 
-  useEffect(() => {
-    api.get("/api/guides/me").catch(() => {}).finally(() => setLoading(false));
-  }, []);
+  const fetchProfile = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get("/api/guides/me");
+      setProfile(res.data);
+      setMode("view");
+    } catch (err) {
+      if (err?.response?.status === 404) {
+        setProfile(null);
+        setMode("create");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchProfile(); }, []);
+
+  const startEdit = () => {
+    setForm({
+      experienceYears: profile.experienceYears?.toString() || "",
+      languages: [...(profile.languages || [])],
+      pricePerDay: profile.pricePerDay?.toString() || "",
+      location: profile.location || "",
+      bio: profile.bio || "",
+      profilePhoto: profile.profilePhoto || "",
+    });
+    setPhotoPreview(profile.profilePhoto || null);
+    setSuccess(""); setError("");
+    setMode("edit");
+  };
+
+  const cancelEdit = () => {
+    setMode("view");
+    setSuccess(""); setError("");
+  };
 
   const handleChange = (e) =>
     setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
@@ -39,24 +74,64 @@ function GuideProfilePage() {
   const removeLanguage = (lang) =>
     setForm((p) => ({ ...p, languages: p.languages.filter((l) => l !== lang) }));
 
-  const handleSubmit = async (e) => {
+  // ✅ Create new profile
+  const handleCreate = async (e) => {
     e.preventDefault();
     setError(""); setSuccess("");
     if (form.languages.length === 0) { setError("Add at least one language"); return; }
     if (!form.profilePhoto) { setError("Please select a profile photo"); return; }
     setSubmitting(true);
     try {
-      const res = await api.post("/api/guides", {
+      await api.post("/api/guides", {
         ...form,
         experienceYears: parseInt(form.experienceYears),
         pricePerDay: parseFloat(form.pricePerDay),
       });
-      setProfile(res.data);
-      setSuccess("Guide profile created successfully!");
+      setSuccess("Guide profile created!");
+      fetchProfile();
     } catch (err) {
       setError(err?.response?.data?.message || "Failed to create profile");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // ✅ Update existing profile
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    setError(""); setSuccess("");
+    if (form.languages.length === 0) { setError("Add at least one language"); return; }
+    setSubmitting(true);
+    try {
+      await api.put("/api/guides/me", {
+        ...form,
+        experienceYears: parseInt(form.experienceYears),
+        pricePerDay: parseFloat(form.pricePerDay),
+      });
+      setSuccess("Profile updated successfully!");
+      fetchProfile();
+    } catch (err) {
+      setError(err?.response?.data?.message || "Update failed");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // ✅ Delete profile
+  const handleDelete = async () => {
+    if (!window.confirm("Delete your guide profile? This cannot be undone.")) return;
+    setDeleting(true);
+    setError("");
+    try {
+      await api.delete("/api/guides/me");
+      setProfile(null);
+      setForm(emptyForm);
+      setPhotoPreview(null);
+      setMode("create");
+    } catch (err) {
+      setError(err?.response?.data?.message || "Delete failed");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -66,47 +141,111 @@ function GuideProfilePage() {
     </div>
   );
 
-  if (profile) return (
+  // ─── View existing profile ─────────────────────────────────────────────────
+  if (mode === "view" && profile) return (
     <div className="max-w-2xl mx-auto">
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl p-8 text-white shadow-lg mb-6">
-        <CheckCircle size={40} className="mb-3 text-blue-200" />
-        <h1 className="text-2xl font-bold">Guide Profile Active</h1>
-        <p className="text-blue-200 mt-1">Your guide profile is live and visible to tourists.</p>
-      </div>
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 space-y-4">
-        {profile.profilePhoto && (
-          <div className="flex justify-center mb-2">
-            <img src={profile.profilePhoto} alt="Profile"
-              className="w-24 h-24 rounded-2xl object-cover border-4 border-blue-100 shadow" />
+      {/* Header card */}
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl p-6 mb-6 flex items-center gap-5 shadow-lg">
+        {profile.profilePhoto ? (
+          <img src={profile.profilePhoto} alt="Profile"
+            className="w-20 h-20 rounded-2xl object-cover border-2 border-white/30 shadow" />
+        ) : (
+          <div className="w-20 h-20 rounded-2xl bg-white/20 border-2 border-white/30 flex items-center justify-center text-white text-3xl font-bold">
+            {profile.name?.charAt(0)}
           </div>
         )}
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <CheckCircle size={18} className="text-emerald-300" />
+            <span className="text-emerald-200 text-sm font-medium">Profile Active</span>
+          </div>
+          <h1 className="text-2xl font-bold text-white">{profile.name}</h1>
+          <p className="text-blue-200 text-sm flex items-center gap-1 mt-0.5">
+            <MapPin size={13} /> {profile.location}
+          </p>
+        </div>
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={startEdit}
+            className="flex items-center gap-2 bg-white/15 hover:bg-white/25 text-white border border-white/20 px-4 py-2 rounded-xl text-sm font-semibold transition"
+          >
+            <Pencil size={14} /> Edit
+          </button>
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="flex items-center gap-2 bg-red-500/20 hover:bg-red-500/40 text-white border border-red-400/30 px-4 py-2 rounded-xl text-sm font-semibold transition disabled:opacity-60"
+          >
+            <Trash2 size={14} /> {deleting ? "Deleting..." : "Delete"}
+          </button>
+        </div>
+      </div>
+
+      {error && (
+        <div className="mb-5 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
+          <AlertCircle size={15} /> {error}
+        </div>
+      )}
+
+      {/* Details */}
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 space-y-4">
         {[
-          { label: "Location", value: profile.location },
-          { label: "Experience", value: `${profile.experienceYears} years` },
-          { label: "Price / Day", value: `$${profile.pricePerDay}` },
-          { label: "Languages", value: profile.languages?.join(", ") },
-          { label: "Rating", value: `${profile.rating} ⭐` },
+          { label: "Experience",      value: `${profile.experienceYears} years` },
+          { label: "Price / Day",     value: `$${parseFloat(profile.pricePerDay).toFixed(2)}` },
+          { label: "Languages",       value: profile.languages?.join(", ") || "—" },
+          { label: "Rating",          value: `${profile.rating?.toFixed(1)} ⭐` },
+          { label: "Available Dates", value: `${profile.availableDates?.length || 0} days available` },
         ].map((item) => (
           <div key={item.label} className="flex justify-between border-b border-slate-100 pb-3 last:border-0">
             <span className="text-slate-400 text-sm">{item.label}</span>
             <span className="text-slate-800 font-semibold text-sm">{item.value}</span>
           </div>
         ))}
-        <p className="text-slate-600 text-sm pt-2">{profile.bio}</p>
+        <p className="text-slate-600 text-sm leading-relaxed pt-1">{profile.bio}</p>
       </div>
     </div>
   );
 
+  // ─── Create / Edit form ────────────────────────────────────────────────────
+  const isEdit = mode === "edit";
+
   return (
     <div className="max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold text-slate-800 mb-2">Create Guide Profile</h1>
-      <p className="text-slate-500 text-sm mb-6">Set up your profile so tourists can find and book you.</p>
+      <div className="flex items-center justify-between mb-2">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">
+            {isEdit ? "Edit Guide Profile" : "Create Guide Profile"}
+          </h1>
+          <p className="text-slate-500 text-sm mt-0.5">
+            {isEdit
+              ? "Update your profile information below."
+              : "Set up your profile so tourists can find and book you."}
+          </p>
+        </div>
+        {isEdit && (
+          <button
+            onClick={cancelEdit}
+            className="flex items-center gap-1.5 text-slate-500 hover:text-slate-700 border border-slate-200 px-4 py-2 rounded-xl text-sm transition"
+          >
+            <X size={14} /> Cancel
+          </button>
+        )}
+      </div>
 
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-8">
-        {success && <div className="mb-5 bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl text-sm">{success}</div>}
-        {error && <div className="mb-5 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm">{error}</div>}
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-8 mt-5">
+        {success && (
+          <div className="mb-5 bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
+            <CheckCircle size={15} /> {success}
+          </div>
+        )}
+        {error && (
+          <div className="mb-5 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
+            <AlertCircle size={15} /> {error}
+          </div>
+        )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={isEdit ? handleUpdate : handleCreate} className="space-y-5">
+          {/* Experience + Price */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Experience (years) *</label>
@@ -127,6 +266,7 @@ function GuideProfilePage() {
             </div>
           </div>
 
+          {/* Location */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5">Location *</label>
             <div className="relative">
@@ -137,6 +277,7 @@ function GuideProfilePage() {
             </div>
           </div>
 
+          {/* Languages */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5">Languages Spoken *</label>
             <div className="flex gap-2 mb-2">
@@ -159,6 +300,7 @@ function GuideProfilePage() {
             </div>
           </div>
 
+          {/* Bio */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5">Bio *</label>
             <div className="relative">
@@ -169,9 +311,9 @@ function GuideProfilePage() {
             </div>
           </div>
 
-          {/* ✅ Reusable file picker */}
+          {/* Photo */}
           <ImageUpload
-            label="Profile Photo *"
+            label={isEdit ? "Profile Photo (leave empty to keep current)" : "Profile Photo *"}
             preview={photoPreview}
             onChange={(base64) => {
               setPhotoPreview(base64);
@@ -179,7 +321,7 @@ function GuideProfilePage() {
             }}
             onClear={() => {
               setPhotoPreview(null);
-              setForm((p) => ({ ...p, profilePhoto: "" }));
+              setForm((p) => ({ ...p, profilePhoto: isEdit ? profile.profilePhoto : "" }));
             }}
             setError={setError}
             maxMB={2}
@@ -188,8 +330,10 @@ function GuideProfilePage() {
           <button type="submit" disabled={submitting}
             className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white py-3 rounded-xl font-semibold text-sm transition shadow-lg shadow-blue-200"
           >
-            <Upload size={16} />
-            {submitting ? "Creating Profile..." : "Create Guide Profile"}
+            {isEdit ? <Save size={16} /> : <Upload size={16} />}
+            {submitting
+              ? (isEdit ? "Saving..." : "Creating...")
+              : (isEdit ? "Save Changes" : "Create Guide Profile")}
           </button>
         </form>
       </div>
