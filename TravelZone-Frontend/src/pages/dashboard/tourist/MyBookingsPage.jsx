@@ -2,18 +2,20 @@ import { useEffect, useState } from "react";
 import api from "../../../api/axios";
 import {
   CalendarDays, DollarSign, X, CheckCircle, Clock,
-  XCircle, Building2, User
+  XCircle, Building2, User, BadgeCheck
 } from "lucide-react";
 
+// ✅ FIX: Added COMPLETED status (was missing — caused COMPLETED to show as "Pending")
 const STATUS_STYLES = {
-  PENDING:   { bg: "bg-amber-50",   text: "text-amber-700",   border: "border-amber-200",   icon: Clock,       label: "Pending" },
-  CONFIRMED: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200", icon: CheckCircle, label: "Confirmed" },
-  REJECTED:  { bg: "bg-red-50",     text: "text-red-600",     border: "border-red-200",     icon: XCircle,     label: "Rejected" },
-  CANCELLED: { bg: "bg-slate-50",   text: "text-slate-500",   border: "border-slate-200",   icon: XCircle,     label: "Cancelled" },
+  PENDING:   { bg: "bg-amber-50",   text: "text-amber-700",   border: "border-amber-200",   icon: Clock,        label: "Pending" },
+  CONFIRMED: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200", icon: CheckCircle,  label: "Confirmed" },
+  REJECTED:  { bg: "bg-red-50",     text: "text-red-600",     border: "border-red-200",     icon: XCircle,      label: "Rejected" },
+  CANCELLED: { bg: "bg-slate-50",   text: "text-slate-500",   border: "border-slate-200",   icon: XCircle,      label: "Cancelled" },
+  COMPLETED: { bg: "bg-blue-50",    text: "text-blue-700",    border: "border-blue-200",    icon: BadgeCheck,   label: "Completed" },
 };
 
 function MyBookingsPage() {
-  const [tab, setTab] = useState("guides");   // "guides" | "hotels"
+  const [tab, setTab] = useState("guides");
   const [guideBookings, setGuideBookings] = useState([]);
   const [hotelReservations, setHotelReservations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -119,6 +121,7 @@ function MyBookingsPage() {
         ) : (
           <div className="space-y-4">
             {guideBookings.map((booking) => {
+              // ✅ FIX: STATUS_STYLES now includes COMPLETED so this fallback never hits PENDING incorrectly
               const s = STATUS_STYLES[booking.status] || STATUS_STYLES.PENDING;
               const StatusIcon = s.icon;
               return (
@@ -143,6 +146,7 @@ function MyBookingsPage() {
                       <span className="flex items-center gap-1.5"><DollarSign size={13} /> ${parseFloat(booking.totalPrice).toFixed(2)}</span>
                     </div>
                   </div>
+                  {/* ✅ FIX: Only show Cancel on PENDING or CONFIRMED — not on COMPLETED/REJECTED/CANCELLED */}
                   {(booking.status === "PENDING" || booking.status === "CONFIRMED") && (
                     <button
                       onClick={() => cancelGuideBooking(booking.bookingId)}

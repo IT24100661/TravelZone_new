@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import api from "../../../api/axios";
 import {
   CalendarCheck, CheckCircle, XCircle, Clock,
-  DollarSign, Inbox, ChevronRight
+  DollarSign, Inbox, BadgeCheck
 } from "lucide-react";
 
 const STATUS_CONFIG = {
@@ -10,15 +10,15 @@ const STATUS_CONFIG = {
   CONFIRMED: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200", icon: CheckCircle,  dot: "bg-emerald-400", label: "Confirmed" },
   REJECTED:  { bg: "bg-red-50",     text: "text-red-600",     border: "border-red-200",     icon: XCircle,      dot: "bg-red-400",     label: "Rejected" },
   CANCELLED: { bg: "bg-slate-100",  text: "text-slate-500",   border: "border-slate-200",   icon: XCircle,      dot: "bg-slate-400",   label: "Cancelled" },
-  COMPLETED: { bg: "bg-blue-50",    text: "text-blue-700",    border: "border-blue-200",    icon: CheckCircle,  dot: "bg-blue-400",    label: "Completed" },
+  COMPLETED: { bg: "bg-blue-50",    text: "text-blue-700",    border: "border-blue-200",    icon: BadgeCheck,   dot: "bg-blue-400",    label: "Completed" },
 };
 
 function GuideBookingRequestsPage() {
-  const [bookings, setBookings] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [bookings, setBookings]         = useState([]);
+  const [loading, setLoading]           = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
-  const [error, setError]     = useState("");
-  const [success, setSuccess] = useState("");
+  const [error, setError]               = useState("");
+  const [success, setSuccess]           = useState("");
 
   const fetchBookings = async () => {
     setLoading(true);
@@ -36,7 +36,11 @@ function GuideBookingRequestsPage() {
     setError(""); setSuccess("");
     try {
       await api.put(`/api/guide-bookings/${bookingId}/status`, { status });
-      setSuccess(`Booking ${status === "CONFIRMED" ? "confirmed" : "rejected"} successfully`);
+      const label =
+        status === "CONFIRMED" ? "confirmed" :
+        status === "REJECTED"  ? "rejected"  :
+        "marked as completed";
+      setSuccess(`Booking ${label} successfully`);
       fetchBookings();
     } catch (err) {
       setError(err?.response?.data?.message || "Action failed");
@@ -56,8 +60,9 @@ function GuideBookingRequestsPage() {
     } finally { setActionLoading(null); }
   };
 
-  const pending = bookings.filter((b) => b.status === "PENDING");
-  const others  = bookings.filter((b) => b.status !== "PENDING");
+  const pending   = bookings.filter((b) => b.status === "PENDING");
+  const confirmed = bookings.filter((b) => b.status === "CONFIRMED");
+  const others    = bookings.filter((b) => b.status !== "PENDING" && b.status !== "CONFIRMED");
 
   if (loading) return (
     <div className="flex items-center justify-center h-64">
@@ -73,10 +78,15 @@ function GuideBookingRequestsPage() {
           <h1 className="text-2xl font-black text-slate-800">Booking Requests</h1>
           <p className="text-slate-400 text-sm mt-0.5">Manage tourist requests for your guide services</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {pending.length > 0 && (
             <span className="bg-amber-50 text-amber-700 border border-amber-200 text-xs px-3 py-1.5 rounded-full font-bold animate-pulse">
               {pending.length} pending
+            </span>
+          )}
+          {confirmed.length > 0 && (
+            <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs px-3 py-1.5 rounded-full font-bold">
+              {confirmed.length} confirmed
             </span>
           )}
           <span className="bg-slate-100 text-slate-600 border border-slate-200 text-xs px-3 py-1.5 rounded-full font-bold">
@@ -108,7 +118,7 @@ function GuideBookingRequestsPage() {
       ) : (
         <div className="space-y-8">
 
-          {/* Pending */}
+          {/* ── Pending ─────────────────────────────────────────────── */}
           {pending.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-3">
@@ -124,14 +134,36 @@ function GuideBookingRequestsPage() {
                     onConfirm={() => updateStatus(booking.bookingId, "CONFIRMED")}
                     onReject={() => updateStatus(booking.bookingId, "REJECTED")}
                     onCancel={() => cancelBooking(booking.bookingId)}
-                    showActions
+                    showPendingActions
                   />
                 ))}
               </div>
             </div>
           )}
 
-          {/* Past */}
+          {/* ── Confirmed (awaiting completion) ─────────────────────── */}
+          {confirmed.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="w-2 h-2 bg-emerald-400 rounded-full" />
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Confirmed — Mark as Completed</p>
+              </div>
+              <div className="space-y-3">
+                {confirmed.map((booking) => (
+                  <BookingCard
+                    key={booking.bookingId}
+                    booking={booking}
+                    actionLoading={actionLoading}
+                    onComplete={() => updateStatus(booking.bookingId, "COMPLETED")}
+                    onCancel={() => cancelBooking(booking.bookingId)}
+                    showConfirmedActions
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── Past (completed / rejected / cancelled) ──────────────── */}
           {others.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-3">
@@ -144,7 +176,6 @@ function GuideBookingRequestsPage() {
                     key={booking.bookingId}
                     booking={booking}
                     actionLoading={actionLoading}
-                    showActions={false}
                   />
                 ))}
               </div>
@@ -156,7 +187,17 @@ function GuideBookingRequestsPage() {
   );
 }
 
-function BookingCard({ booking, actionLoading, onConfirm, onReject, onCancel, showActions }) {
+// ─────────────────────────────────────────────────────────────────────────────
+function BookingCard({
+  booking,
+  actionLoading,
+  onConfirm,
+  onReject,
+  onComplete,
+  onCancel,
+  showPendingActions = false,
+  showConfirmedActions = false,
+}) {
   const cfg = STATUS_CONFIG[booking.status] || STATUS_CONFIG.PENDING;
   const StatusIcon = cfg.icon;
   const isProcessing = !!actionLoading;
@@ -194,8 +235,8 @@ function BookingCard({ booking, actionLoading, onConfirm, onReject, onCancel, sh
         </span>
       </div>
 
-      {/* Actions */}
-      {showActions && (
+      {/* ── Pending actions: Confirm / Reject / Cancel ────────────── */}
+      {showPendingActions && (
         <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-100">
           <button
             onClick={onConfirm}
@@ -212,6 +253,27 @@ function BookingCard({ booking, actionLoading, onConfirm, onReject, onCancel, sh
           >
             <XCircle size={14} />
             {actionLoading === booking.bookingId + "REJECTED" ? "Rejecting..." : "Reject"}
+          </button>
+          <button
+            onClick={onCancel}
+            disabled={isProcessing}
+            className="ml-auto bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-500 px-4 py-2 rounded-xl text-xs font-bold transition"
+          >
+            {actionLoading === booking.bookingId + "CANCEL" ? "Cancelling..." : "Cancel"}
+          </button>
+        </div>
+      )}
+
+      {/* ── Confirmed actions: Mark Completed / Cancel ────────────── */}
+      {showConfirmedActions && (
+        <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-100">
+          <button
+            onClick={onComplete}
+            disabled={isProcessing}
+            className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-5 py-2 rounded-xl text-xs font-bold transition shadow-sm"
+          >
+            <BadgeCheck size={14} />
+            {actionLoading === booking.bookingId + "COMPLETED" ? "Saving..." : "Mark as Completed"}
           </button>
           <button
             onClick={onCancel}
