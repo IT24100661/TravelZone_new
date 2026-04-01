@@ -2,23 +2,23 @@ import { useEffect, useState } from "react";
 import api from "../../../api/axios";
 import {
   CalendarCheck, CheckCircle, XCircle, Clock,
-  DollarSign, Inbox, BadgeCheck
+  Inbox, BadgeCheck, Banknote
 } from "lucide-react";
 
 const STATUS_CONFIG = {
-  PENDING:   { bg: "bg-amber-50",   text: "text-amber-700",   border: "border-amber-200",   icon: Clock,        dot: "bg-amber-400",   label: "Pending" },
-  CONFIRMED: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200", icon: CheckCircle,  dot: "bg-emerald-400", label: "Confirmed" },
-  REJECTED:  { bg: "bg-red-50",     text: "text-red-600",     border: "border-red-200",     icon: XCircle,      dot: "bg-red-400",     label: "Rejected" },
-  CANCELLED: { bg: "bg-slate-100",  text: "text-slate-500",   border: "border-slate-200",   icon: XCircle,      dot: "bg-slate-400",   label: "Cancelled" },
-  COMPLETED: { bg: "bg-blue-50",    text: "text-blue-700",    border: "border-blue-200",    icon: BadgeCheck,   dot: "bg-blue-400",    label: "Completed" },
+  PENDING:   { bg: "bg-amber-50",   text: "text-amber-700",   border: "border-amber-200",   icon: Clock,       dot: "bg-amber-400",   label: "Pending" },
+  CONFIRMED: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200", icon: CheckCircle, dot: "bg-emerald-400", label: "Confirmed" },
+  REJECTED:  { bg: "bg-red-50",     text: "text-red-600",     border: "border-red-200",     icon: XCircle,     dot: "bg-red-400",     label: "Rejected" },
+  CANCELLED: { bg: "bg-slate-100",  text: "text-slate-500",   border: "border-slate-200",   icon: XCircle,     dot: "bg-slate-400",   label: "Cancelled" },
+  COMPLETED: { bg: "bg-blue-50",    text: "text-blue-700",    border: "border-blue-200",    icon: BadgeCheck,  dot: "bg-blue-400",    label: "Completed" },
 };
 
 function GuideBookingRequestsPage() {
-  const [bookings, setBookings]         = useState([]);
-  const [loading, setLoading]           = useState(true);
+  const [bookings, setBookings]           = useState([]);
+  const [loading, setLoading]             = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
-  const [error, setError]               = useState("");
-  const [success, setSuccess]           = useState("");
+  const [error, setError]                 = useState("");
+  const [success, setSuccess]             = useState("");
 
   const fetchBookings = async () => {
     setLoading(true);
@@ -118,7 +118,7 @@ function GuideBookingRequestsPage() {
       ) : (
         <div className="space-y-8">
 
-          {/* ── Pending ─────────────────────────────────────────────── */}
+          {/* ── Pending ───────────────────────────────────────────────── */}
           {pending.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-3">
@@ -141,7 +141,7 @@ function GuideBookingRequestsPage() {
             </div>
           )}
 
-          {/* ── Confirmed (awaiting completion) ─────────────────────── */}
+          {/* ── Confirmed ─────────────────────────────────────────────── */}
           {confirmed.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-3">
@@ -163,7 +163,7 @@ function GuideBookingRequestsPage() {
             </div>
           )}
 
-          {/* ── Past (completed / rejected / cancelled) ──────────────── */}
+          {/* ── Past ──────────────────────────────────────────────────── */}
           {others.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-3">
@@ -181,6 +181,7 @@ function GuideBookingRequestsPage() {
               </div>
             </div>
           )}
+
         </div>
       )}
     </div>
@@ -230,12 +231,15 @@ function BookingCard({
           {booking.bookingDate}
         </span>
         <span className="flex items-center gap-1.5">
-          <DollarSign size={14} className="text-emerald-400" />
-          <span className="font-bold text-slate-700">${parseFloat(booking.totalPrice).toFixed(2)}</span>
+          {/* ✅ Changed: DollarSign → Banknote, $ → LKR */}
+          <Banknote size={14} className="text-emerald-400" />
+          <span className="font-bold text-slate-700">
+            LKR {parseFloat(booking.totalPrice).toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </span>
         </span>
       </div>
 
-      {/* ── Pending actions: Confirm / Reject / Cancel ────────────── */}
+      {/* ── Pending actions ────────────────────────────────────────── */}
       {showPendingActions && (
         <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-100">
           <button
@@ -264,7 +268,7 @@ function BookingCard({
         </div>
       )}
 
-      {/* ── Confirmed actions: Mark Completed / Cancel ────────────── */}
+      {/* ── Confirmed actions ──────────────────────────────────────── */}
       {showConfirmedActions && (
         <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-100">
           <button

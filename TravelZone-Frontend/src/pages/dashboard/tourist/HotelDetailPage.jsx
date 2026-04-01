@@ -21,7 +21,7 @@ function HotelDetailPage() {
   // Carousel state
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  // ✅ NEW — Lightbox state
+  // Lightbox state
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
@@ -35,7 +35,7 @@ function HotelDetailPage() {
       .finally(() => setLoading(false));
   }, [hotelId]);
 
-  // ✅ NEW — Keyboard navigation for lightbox
+  // Keyboard navigation for lightbox
   const handleKeyDown = useCallback(
     (e) => {
       if (!lightboxOpen) return;
@@ -53,7 +53,7 @@ function HotelDetailPage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
 
-  // ✅ NEW — Prevent background scroll when lightbox is open
+  // Prevent background scroll when lightbox is open
   useEffect(() => {
     if (lightboxOpen) {
       document.body.style.overflow = "hidden";
@@ -63,7 +63,7 @@ function HotelDetailPage() {
     return () => { document.body.style.overflow = ""; };
   }, [lightboxOpen]);
 
-  // ✅ NEW — Open lightbox at a specific index
+  // Open lightbox at a specific index
   const openLightbox = (index) => {
     setLightboxIndex(index);
     setLightboxOpen(true);
@@ -91,7 +91,7 @@ function HotelDetailPage() {
         checkIn,
         checkOut,
       });
-      setSuccess(`Reservation confirmed for ${nights} night(s) — Total: $${totalPrice}`);
+      setSuccess(`Reservation confirmed for ${nights} night(s) — Total: LKR ${totalPrice}`);
     } catch (err) {
       setError(err?.response?.data?.message || "Reservation failed");
     } finally {
@@ -162,7 +162,7 @@ function HotelDetailPage() {
             </button>
           )}
 
-          {/* Main fullscreen image — click does NOT close (stopPropagation) */}
+          {/* Main fullscreen image */}
           <img
             src={images[lightboxIndex].imageUrl}
             alt={`${hotel.name} — photo ${lightboxIndex + 1}`}
@@ -242,7 +242,7 @@ function HotelDetailPage() {
               </div>
             </div>
 
-            {/* Prev / Next — stop propagation so carousel doesn't open lightbox */}
+            {/* Prev / Next */}
             {hasMultiple && (
               <>
                 <button
@@ -367,7 +367,7 @@ function HotelDetailPage() {
                   </div>
                   <div className="text-right">
                     <p className="text-emerald-600 font-bold text-sm">
-                      ${parseFloat(room.pricePerNight).toFixed(0)}/night
+                      LKR {parseFloat(room.pricePerNight).toLocaleString()}/night
                     </p>
                     <span
                       className={`text-xs font-semibold ${
@@ -420,7 +420,9 @@ function HotelDetailPage() {
               {totalPrice && (
                 <div className="flex justify-between bg-blue-50 rounded-xl px-4 py-3 mb-4">
                   <span className="text-slate-600 text-sm">{nights} night(s)</span>
-                  <span className="text-blue-700 font-bold text-lg">${totalPrice}</span>
+                  <span className="text-blue-700 font-bold text-lg">
+                    LKR {parseFloat(totalPrice).toLocaleString()}
+                  </span>
                 </div>
               )}
               <button

@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../../../api/axios";
 import {
-  MapPin, Star, DollarSign, Globe, CalendarDays,
-  ArrowLeft, Clock, CheckCircle
+  MapPin, Star, Banknote, Globe, CalendarDays,
+  ArrowLeft, Clock, CheckCircle, AlertCircle
 } from "lucide-react";
 
 function GuideDetailPage() {
@@ -51,6 +51,13 @@ function GuideDetailPage() {
 
   const today = new Date().toISOString().split("T")[0];
 
+  // ── Helper: format price in LKR ─────────────────────────────────────────────
+  const lkr = (amount) =>
+    `LKR ${parseFloat(amount).toLocaleString("en-LK", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+
   return (
     <div className="max-w-3xl mx-auto">
       {/* Back button */}
@@ -85,8 +92,8 @@ function GuideDetailPage() {
               {guide.rating?.toFixed(1) || "0.0"} rating
             </span>
             <span className="flex items-center gap-1 text-emerald-300 text-sm font-semibold">
-              <DollarSign size={14} />
-              ${parseFloat(guide.pricePerDay).toFixed(2)} / day
+              <Banknote size={14} />
+              {lkr(guide.pricePerDay)} / day
             </span>
           </div>
         </div>
@@ -95,6 +102,7 @@ function GuideDetailPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {/* Left — details */}
         <div className="md:col-span-2 space-y-5">
+
           {/* About */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
             <h2 className="font-bold text-slate-800 mb-3">About</h2>
@@ -106,12 +114,12 @@ function GuideDetailPage() {
             <h2 className="font-bold text-slate-800 mb-4">Details</h2>
             <div className="space-y-3">
               {[
-                { icon: Clock, label: "Experience", value: `${guide.experienceYears} years` },
-                { icon: Globe, label: "Languages", value: guide.languages?.join(", ") || "—" },
-                { icon: CalendarDays, label: "Available", value: `${guide.availableDates?.length || 0} days open` },
-                { icon: DollarSign, label: "Rate", value: `$${parseFloat(guide.pricePerDay).toFixed(2)} per day` },
+                { icon: Clock,       label: "Experience", value: `${guide.experienceYears} years` },
+                { icon: Globe,       label: "Languages",  value: guide.languages?.join(", ") || "—" },
+                { icon: CalendarDays,label: "Available",  value: `${guide.availableDates?.length || 0} days open` },
+                { icon: Banknote,    label: "Rate",       value: `${lkr(guide.pricePerDay)} per day` },
               ].map(({ icon: Icon, label, value }) => (
-                <div key={label} className="flex items-center justify-between border-b border-slate-100 pb-3 last:border-0">
+                <div key={label} className="flex items-center justify-between border-b border-slate-100 pb-3 last:border-0 last:pb-0">
                   <span className="flex items-center gap-2 text-slate-500 text-sm">
                     <Icon size={15} className="text-blue-400" /> {label}
                   </span>
@@ -165,8 +173,8 @@ function GuideDetailPage() {
             ) : (
               <>
                 {bookingError && (
-                  <div className="mb-3 bg-red-50 border border-red-200 text-red-600 px-3 py-2 rounded-xl text-xs">
-                    {bookingError}
+                  <div className="mb-3 bg-red-50 border border-red-200 text-red-600 px-3 py-2 rounded-xl text-xs flex items-center gap-1.5">
+                    <AlertCircle size={13} /> {bookingError}
                   </div>
                 )}
 
@@ -184,17 +192,17 @@ function GuideDetailPage() {
                 </div>
 
                 {/* Price summary */}
-                <div className="bg-slate-50 rounded-xl p-3 mb-4">
+                <div className="bg-slate-50 rounded-xl p-3 mb-4 space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">Rate</span>
+                    <span className="text-slate-500">Rate per day</span>
                     <span className="font-semibold text-slate-800">
-                      ${parseFloat(guide.pricePerDay).toFixed(2)} / day
+                      {lkr(guide.pricePerDay)}
                     </span>
                   </div>
-                  <div className="flex justify-between text-sm mt-1.5 pt-1.5 border-t border-slate-200">
+                  <div className="flex justify-between text-sm pt-2 border-t border-slate-200">
                     <span className="font-bold text-slate-700">Total</span>
                     <span className="font-bold text-blue-600">
-                      ${parseFloat(guide.pricePerDay).toFixed(2)}
+                      {lkr(guide.pricePerDay)}
                     </span>
                   </div>
                 </div>

@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 import api from "../../../api/axios";
 import {
-  CalendarDays, DollarSign, X, CheckCircle, Clock,
+  CalendarDays, X, CheckCircle, Clock,
   XCircle, Building2, User, BadgeCheck
 } from "lucide-react";
 
-// ✅ FIX: Added COMPLETED status (was missing — caused COMPLETED to show as "Pending")
 const STATUS_STYLES = {
   PENDING:   { bg: "bg-amber-50",   text: "text-amber-700",   border: "border-amber-200",   icon: Clock,        label: "Pending" },
   CONFIRMED: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200", icon: CheckCircle,  label: "Confirmed" },
@@ -81,7 +80,9 @@ function MyBookingsPage() {
       </div>
 
       {error && (
-        <div className="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm">{error}</div>
+        <div className="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm">
+          {error}
+        </div>
       )}
 
       {/* Tabs */}
@@ -95,7 +96,9 @@ function MyBookingsPage() {
           }`}
         >
           <User size={15} /> Guide Bookings
-          <span className={`text-xs px-2 py-0.5 rounded-full ${tab === "guides" ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"}`}>
+          <span className={`text-xs px-2 py-0.5 rounded-full ${
+            tab === "guides" ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"
+          }`}>
             {guideBookings.length}
           </span>
         </button>
@@ -108,7 +111,9 @@ function MyBookingsPage() {
           }`}
         >
           <Building2 size={15} /> Hotel Reservations
-          <span className={`text-xs px-2 py-0.5 rounded-full ${tab === "hotels" ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"}`}>
+          <span className={`text-xs px-2 py-0.5 rounded-full ${
+            tab === "hotels" ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"
+          }`}>
             {hotelReservations.length}
           </span>
         </button>
@@ -121,14 +126,16 @@ function MyBookingsPage() {
         ) : (
           <div className="space-y-4">
             {guideBookings.map((booking) => {
-              // ✅ FIX: STATUS_STYLES now includes COMPLETED so this fallback never hits PENDING incorrectly
               const s = STATUS_STYLES[booking.status] || STATUS_STYLES.PENDING;
               const StatusIcon = s.icon;
               return (
                 <div key={booking.bookingId} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex items-center gap-4">
                   {booking.guidePhoto ? (
-                    <img src={booking.guidePhoto} alt={booking.guideName}
-                      className="w-14 h-14 rounded-xl object-cover border-2 border-slate-100 flex-shrink-0" />
+                    <img
+                      src={booking.guidePhoto}
+                      alt={booking.guideName}
+                      className="w-14 h-14 rounded-xl object-cover border-2 border-slate-100 flex-shrink-0"
+                    />
                   ) : (
                     <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center text-blue-600 text-xl font-bold flex-shrink-0">
                       {booking.guideName?.charAt(0)}
@@ -142,11 +149,14 @@ function MyBookingsPage() {
                       </span>
                     </div>
                     <div className="flex items-center flex-wrap gap-4 text-sm text-slate-500">
-                      <span className="flex items-center gap-1.5"><CalendarDays size={13} /> {booking.bookingDate}</span>
-                      <span className="flex items-center gap-1.5"><DollarSign size={13} /> ${parseFloat(booking.totalPrice).toFixed(2)}</span>
+                      <span className="flex items-center gap-1.5">
+                        <CalendarDays size={13} /> {booking.bookingDate}
+                      </span>
+                      <span className="flex items-center gap-1.5 font-semibold text-slate-700">
+                        LKR {parseFloat(booking.totalPrice).toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
                     </div>
                   </div>
-                  {/* ✅ FIX: Only show Cancel on PENDING or CONFIRMED — not on COMPLETED/REJECTED/CANCELLED */}
                   {(booking.status === "PENDING" || booking.status === "CONFIRMED") && (
                     <button
                       onClick={() => cancelGuideBooking(booking.bookingId)}
@@ -197,11 +207,12 @@ function MyBookingsPage() {
                     <span className="flex items-center gap-1.5">
                       <CalendarDays size={13} />
                       {res.checkIn} → {res.checkOut}
-                      <span className="text-slate-400 text-xs">({nights} night{nights !== 1 ? "s" : ""})</span>
+                      <span className="text-slate-400 text-xs">
+                        ({nights} night{nights !== 1 ? "s" : ""})
+                      </span>
                     </span>
-                    <span className="flex items-center gap-1.5">
-                      <DollarSign size={13} />
-                      <span className="font-bold text-slate-800">${parseFloat(res.totalPrice).toFixed(2)}</span>
+                    <span className="flex items-center gap-1.5 font-bold text-slate-800">
+                      LKR {parseFloat(res.totalPrice).toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                   </div>
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../../../api/axios";
 import {
-  MapPin, DollarSign, BookOpen, Plus, X,
+  MapPin, BookOpen, Plus, X,
   CheckCircle, Upload, Pencil, Trash2, Save, AlertCircle
 } from "lucide-react";
 import ImageUpload from "../../../components/ui/ImageUpload";
@@ -74,7 +74,6 @@ function GuideProfilePage() {
   const removeLanguage = (lang) =>
     setForm((p) => ({ ...p, languages: p.languages.filter((l) => l !== lang) }));
 
-  // ✅ Create new profile
   const handleCreate = async (e) => {
     e.preventDefault();
     setError(""); setSuccess("");
@@ -96,7 +95,6 @@ function GuideProfilePage() {
     }
   };
 
-  // ✅ Update existing profile
   const handleUpdate = async (e) => {
     e.preventDefault();
     setError(""); setSuccess("");
@@ -117,7 +115,6 @@ function GuideProfilePage() {
     }
   };
 
-  // ✅ Delete profile
   const handleDelete = async () => {
     if (!window.confirm("Delete your guide profile? This cannot be undone.")) return;
     setDeleting(true);
@@ -191,7 +188,7 @@ function GuideProfilePage() {
       <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 space-y-4">
         {[
           { label: "Experience",      value: `${profile.experienceYears} years` },
-          { label: "Price / Day",     value: `$${parseFloat(profile.pricePerDay).toFixed(2)}` },
+          { label: "Price / Day",     value: `LKR ${parseFloat(profile.pricePerDay).toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
           { label: "Languages",       value: profile.languages?.join(", ") || "—" },
           { label: "Rating",          value: `${profile.rating?.toFixed(1)} ⭐` },
           { label: "Available Dates", value: `${profile.availableDates?.length || 0} days available` },
@@ -248,20 +245,40 @@ function GuideProfilePage() {
           {/* Experience + Price */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Experience (years) *</label>
-              <input name="experienceYears" type="number" min="0"
-                value={form.experienceYears} onChange={handleChange} required
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                Experience (years) *
+              </label>
+              <input
+                name="experienceYears"
+                type="number"
+                min="0"
+                value={form.experienceYears}
+                onChange={handleChange}
+                required
                 className="w-full border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition text-sm"
-                placeholder="e.g. 5" />
+                placeholder="e.g. 5"
+              />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Price per Day (LKR) *</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                Price per Day (LKR) *
+              </label>
               <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                <input name="pricePerDay" type="number" min="0.01" step="0.01"
-                  value={form.pricePerDay} onChange={handleChange} required
-                  className="w-full border border-slate-200 rounded-xl pl-9 pr-4 py-2.5 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition text-sm"
-                  placeholder="e.g. 75.00" />
+                {/* ✅ LKR prefix label instead of $ icon */}
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-semibold pointer-events-none select-none">
+                  LKR
+                </span>
+                <input
+                  name="pricePerDay"
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={form.pricePerDay}
+                  onChange={handleChange}
+                  required
+                  className="w-full border border-slate-200 rounded-xl pl-11 pr-4 py-2.5 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition text-sm"
+                  placeholder="e.g. 7500.00"
+                />
               </div>
             </div>
           </div>
@@ -271,9 +288,14 @@ function GuideProfilePage() {
             <label className="block text-sm font-medium text-slate-700 mb-1.5">Location *</label>
             <div className="relative">
               <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-              <input name="location" value={form.location} onChange={handleChange} required
+              <input
+                name="location"
+                value={form.location}
+                onChange={handleChange}
+                required
                 className="w-full border border-slate-200 rounded-xl pl-9 pr-4 py-2.5 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition text-sm"
-                placeholder="e.g. Colombo, Sri Lanka" />
+                placeholder="e.g. Colombo, Sri Lanka"
+              />
             </div>
           </div>
 
@@ -281,20 +303,31 @@ function GuideProfilePage() {
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5">Languages Spoken *</label>
             <div className="flex gap-2 mb-2">
-              <input value={langInput} onChange={(e) => setLangInput(e.target.value)}
+              <input
+                value={langInput}
+                onChange={(e) => setLangInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addLanguage())}
                 className="flex-1 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition text-sm"
-                placeholder="Type a language and press Enter" />
-              <button type="button" onClick={addLanguage}
-                className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl transition">
+                placeholder="Type a language and press Enter"
+              />
+              <button
+                type="button"
+                onClick={addLanguage}
+                className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl transition"
+              >
                 <Plus size={16} />
               </button>
             </div>
             <div className="flex flex-wrap gap-2">
               {form.languages.map((lang) => (
-                <span key={lang} className="flex items-center gap-1.5 bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1 rounded-full text-xs font-medium">
+                <span
+                  key={lang}
+                  className="flex items-center gap-1.5 bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1 rounded-full text-xs font-medium"
+                >
                   {lang}
-                  <button type="button" onClick={() => removeLanguage(lang)}><X size={12} /></button>
+                  <button type="button" onClick={() => removeLanguage(lang)}>
+                    <X size={12} />
+                  </button>
                 </span>
               ))}
             </div>
@@ -305,9 +338,15 @@ function GuideProfilePage() {
             <label className="block text-sm font-medium text-slate-700 mb-1.5">Bio *</label>
             <div className="relative">
               <BookOpen className="absolute left-3 top-3 text-slate-400" size={16} />
-              <textarea name="bio" value={form.bio} onChange={handleChange} required rows={3}
+              <textarea
+                name="bio"
+                value={form.bio}
+                onChange={handleChange}
+                required
+                rows={3}
                 className="w-full border border-slate-200 rounded-xl pl-9 pr-4 py-2.5 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition text-sm resize-none"
-                placeholder="Describe your guiding experience, specialties..." />
+                placeholder="Describe your guiding experience, specialties..."
+              />
             </div>
           </div>
 
@@ -327,7 +366,9 @@ function GuideProfilePage() {
             maxMB={2}
           />
 
-          <button type="submit" disabled={submitting}
+          <button
+            type="submit"
+            disabled={submitting}
             className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white py-3 rounded-xl font-semibold text-sm transition shadow-lg shadow-blue-200"
           >
             {isEdit ? <Save size={16} /> : <Upload size={16} />}
@@ -341,4 +382,4 @@ function GuideProfilePage() {
   );
 }
 
-export default GuideProfilePage;
+export default GuideProfilePage;s

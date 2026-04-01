@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../../../api/axios";
 import {
-  CalendarDays, DollarSign, Building2,
+  CalendarDays, Building2,
   Clock, CheckCircle, XCircle, Inbox, Check, X, Flag
 } from "lucide-react";
 
@@ -48,11 +48,11 @@ function HotelReservationsPage() {
     : reservations.filter((r) => r.status === filterStatus);
 
   const counts = {
-    ALL: reservations.length,
-    PENDING: reservations.filter((r) => r.status === "PENDING").length,
+    ALL:       reservations.length,
+    PENDING:   reservations.filter((r) => r.status === "PENDING").length,
     CONFIRMED: reservations.filter((r) => r.status === "CONFIRMED").length,
     COMPLETED: reservations.filter((r) => r.status === "COMPLETED").length,
-    REJECTED: reservations.filter((r) => r.status === "REJECTED").length,
+    REJECTED:  reservations.filter((r) => r.status === "REJECTED").length,
     CANCELLED: reservations.filter((r) => r.status === "CANCELLED").length,
   };
 
@@ -82,7 +82,9 @@ function HotelReservationsPage() {
       </div>
 
       {error && (
-        <div className="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm">{error}</div>
+        <div className="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm">
+          {error}
+        </div>
       )}
 
       {/* Filter tabs */}
@@ -110,7 +112,9 @@ function HotelReservationsPage() {
           <Inbox size={48} className="mx-auto text-slate-300 mb-4" />
           <p className="text-slate-600 font-semibold">No reservations found</p>
           <p className="text-slate-400 text-sm mt-1">
-            {filterStatus === "ALL" ? "Tourists will appear here once they book your hotels" : `No ${filterStatus.toLowerCase()} reservations`}
+            {filterStatus === "ALL"
+              ? "Tourists will appear here once they book your hotels"
+              : `No ${filterStatus.toLowerCase()} reservations`}
           </p>
         </div>
       ) : (
@@ -118,11 +122,14 @@ function HotelReservationsPage() {
           {filtered.map((r) => {
             const s = STATUS_STYLES[r.status] || STATUS_STYLES.PENDING;
             const StatusIcon = s.icon;
-            const nights = Math.round((new Date(r.checkOut) - new Date(r.checkIn)) / 86400000);
+            const nights = Math.round(
+              (new Date(r.checkOut) - new Date(r.checkIn)) / 86400000
+            );
             const canAct = r.status === "PENDING" || r.status === "CONFIRMED";
 
             return (
               <div key={r.reservationId} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+
                 {/* Header row */}
                 <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
                   <div className="flex items-center gap-3">
@@ -146,11 +153,26 @@ function HotelReservationsPage() {
                   <span className="flex items-center gap-1.5">
                     <CalendarDays size={14} className="text-blue-400" />
                     {r.checkIn} → {r.checkOut}
-                    <span className="text-slate-400 text-xs ml-1">({nights} night{nights !== 1 ? "s" : ""})</span>
+                    <span className="text-slate-400 text-xs ml-1">
+                      ({nights} night{nights !== 1 ? "s" : ""})
+                    </span>
                   </span>
+                  {/* ✅ Changed from $ to LKR */}
                   <span className="flex items-center gap-1.5">
-                    <DollarSign size={14} className="text-emerald-500" />
-                    <span className="font-bold text-slate-800">${parseFloat(r.totalPrice).toFixed(2)}</span>
+                    <span className="text-xs font-semibold text-emerald-600">LKR</span>
+                    <span className="font-bold text-slate-800">
+                      {parseFloat(r.totalPrice).toLocaleString("en-LK", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </span>
+                  </span>
+                </div>
+
+                {/* Reservation ID tag */}
+                <div className="mb-3">
+                  <span className="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded-lg font-mono">
+                    Reservation #{r.reservationId}
                   </span>
                 </div>
 
