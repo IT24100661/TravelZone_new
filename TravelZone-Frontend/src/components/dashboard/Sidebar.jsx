@@ -1,7 +1,8 @@
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, User, MapPinned, Building2,
-  CalendarCheck, LogOut, Compass, ClipboardList, ChevronRight
+  CalendarCheck, LogOut, Compass, ClipboardList,
+  ChevronRight, CreditCard, Star               // ✅ NEW icons
 } from "lucide-react";
 import { useAuth } from "../../auth/AuthContext";
 
@@ -18,24 +19,30 @@ function Sidebar() {
   const theme = roleTheme[user?.role] || roleTheme.TOURIST;
 
   const commonItems = [
-    { label: "Dashboard",  to: "/dashboard",         icon: LayoutDashboard },
+    { label: "Dashboard",  to: "/dashboard",          icon: LayoutDashboard },
     { label: "My Profile", to: "/dashboard/profile",  icon: User },
   ];
 
   const roleItems = {
     TOURIST: [
-      { label: "Browse Guides", to: "/dashboard/guides",   icon: Compass },
-      { label: "Browse Hotels", to: "/dashboard/hotels",   icon: Building2 },
-      { label: "My Bookings",   to: "/dashboard/bookings", icon: CalendarCheck },
+      { label: "Browse Guides", to: "/dashboard/guides",    icon: Compass },
+      { label: "Browse Hotels", to: "/dashboard/hotels",    icon: Building2 },
+      { label: "My Bookings",   to: "/dashboard/bookings",  icon: CalendarCheck },
+      { label: "Payments",      to: "/dashboard/payments",  icon: CreditCard },  // ✅ NEW
+      { label: "My Reviews",    to: "/dashboard/my-reviews", icon: Star },       // ✅ NEW
     ],
     GUIDE: [
       { label: "Guide Profile",    to: "/dashboard/guide-profile",   icon: MapPinned },
       { label: "Booking Requests", to: "/dashboard/guide-bookings",  icon: CalendarCheck },
+      { label: "Payments",         to: "/dashboard/guide-payments",  icon: CreditCard },  // ✅ NEW
+      { label: "Reviews",          to: "/dashboard/guide-reviews",   icon: Star },        // ✅ NEW
     ],
     HOTEL_OWNER: [
-      { label: "My Hotels",    to: "/dashboard/my-hotels",          icon: Building2 },
-      { label: "Manage Rooms", to: "/dashboard/rooms",              icon: CalendarCheck },
-      { label: "Reservations", to: "/dashboard/hotel-reservations", icon: ClipboardList },
+      { label: "My Hotels",    to: "/dashboard/my-hotels",           icon: Building2 },
+      { label: "Manage Rooms", to: "/dashboard/rooms",               icon: CalendarCheck },
+      { label: "Reservations", to: "/dashboard/hotel-reservations",  icon: ClipboardList },
+      { label: "Payments",     to: "/dashboard/hotel-payments",      icon: CreditCard },  // ✅ NEW
+      { label: "Reviews",      to: "/dashboard/hotel-reviews",       icon: Star },        // ✅ NEW
     ],
     ADMIN: [],
   };

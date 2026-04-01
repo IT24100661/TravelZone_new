@@ -497,7 +497,7 @@ function MyHotelsPage() {
                       <Star size={11} fill="currentColor" /> {hotel.rating?.toFixed(1) || "0.0"}
                     </span>
                     <span className="text-emerald-600 text-xs font-bold">
-                      From ${parseFloat(hotel.minPrice || 0).toFixed(0)}/night
+                      From LKR{parseFloat(hotel.minPrice || 0).toFixed(0)}/night
                     </span>
                   </div>
                 </div>
@@ -576,12 +576,12 @@ function MyHotelsPage() {
                         <div>
                           <label className="block text-xs text-slate-500 mb-1">Price / Night *</label>
                           <div className="relative">
-                            <DollarSign className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
-                            <input type="number" min="0.01" step="0.01" value={roomForm.pricePerNight}
-                              onChange={(e) => setRoomForm((p) => ({ ...p, pricePerNight: e.target.value }))}
-                              className="w-full border border-slate-200 rounded-xl pl-7 pr-3 py-2 text-sm outline-none focus:border-blue-400 transition"
-                              placeholder="e.g. 120" />
-                          </div>
+                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-medium">LKR</span>
+  <input type="number" min="0.01" step="0.01" value={roomForm.pricePerNight}
+    onChange={(e) => setRoomForm((p) => ({ ...p, pricePerNight: e.target.value }))}
+    className="w-full border border-slate-200 rounded-xl pl-10 pr-3 py-2 text-sm outline-none focus:border-blue-400 transition"
+    placeholder="e.g. 15000" />
+</div>
                         </div>
                       </div>
                       <div className="flex gap-2">
@@ -615,7 +615,7 @@ function MyHotelsPage() {
                             </div>
                           </div>
                           <div className="flex items-center gap-3">
-                            <span className="text-emerald-600 font-bold text-sm">${parseFloat(room.pricePerNight).toFixed(0)}/night</span>
+                            <span className="text-emerald-600 font-bold text-sm">LKR{parseFloat(room.pricePerNight).toFixed(0)}/night</span>
                             <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${room.available ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-red-50 text-red-600 border-red-200"}`}>
                               {room.available ? "Available" : "Full"}
                             </span>

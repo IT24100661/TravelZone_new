@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../../../api/axios";
-import { BedDouble, DollarSign, Save, AlertCircle, CheckCircle } from "lucide-react";
+import { BedDouble, Save, AlertCircle, CheckCircle } from "lucide-react";
 
 function ManageRoomsPage() {
   const [hotels, setHotels] = useState([]);
@@ -11,7 +11,6 @@ function ManageRoomsPage() {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
-  // ✅ Fixed: load ONLY owner's hotels, not all hotels
   useEffect(() => {
     api.get("/api/hotels/my-hotels")
       .then((res) => setHotels(res.data || []))
@@ -108,7 +107,11 @@ function ManageRoomsPage() {
                     <p className="text-slate-400 text-xs">Room ID: {room.roomId}</p>
                   </div>
                 </div>
-                <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${room.available ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-red-50 text-red-600 border-red-200"}`}>
+                <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${
+                  room.available
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                    : "bg-red-50 text-red-600 border-red-200"
+                }`}>
                   {room.available ? "Available" : "Unavailable"}
                 </span>
               </div>
@@ -116,41 +119,72 @@ function ManageRoomsPage() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
                 <div>
                   <label className="block text-xs text-slate-500 mb-1">Room Count</label>
-                  <input type="number" min="0"
+                  <input
+                    type="number"
+                    min="0"
                     value={data.roomCount}
                     disabled={!editing}
                     onChange={(e) => setEditingRoom((p) => ({ ...p, roomCount: e.target.value }))}
-                    className={`w-full border rounded-xl px-3 py-2 text-sm outline-none transition ${editing ? "border-blue-400 focus:ring-2 focus:ring-blue-100" : "border-slate-200 bg-slate-50 text-slate-400"}`}
+                    className={`w-full border rounded-xl px-3 py-2 text-sm outline-none transition ${
+                      editing
+                        ? "border-blue-400 focus:ring-2 focus:ring-blue-100"
+                        : "border-slate-200 bg-slate-50 text-slate-400"
+                    }`}
                   />
                 </div>
+
                 <div>
                   <label className="block text-xs text-slate-500 mb-1">Available Count</label>
-                  <input type="number" min="0"
+                  <input
+                    type="number"
+                    min="0"
                     value={data.availableCount}
                     disabled={!editing}
                     onChange={(e) => setEditingRoom((p) => ({ ...p, availableCount: e.target.value }))}
-                    className={`w-full border rounded-xl px-3 py-2 text-sm outline-none transition ${editing ? "border-blue-400 focus:ring-2 focus:ring-blue-100" : "border-slate-200 bg-slate-50 text-slate-400"}`}
+                    className={`w-full border rounded-xl px-3 py-2 text-sm outline-none transition ${
+                      editing
+                        ? "border-blue-400 focus:ring-2 focus:ring-blue-100"
+                        : "border-slate-200 bg-slate-50 text-slate-400"
+                    }`}
                   />
                 </div>
+
+                {/* ── Price / Night with LKR prefix ─────────────────────── */}
                 <div>
                   <label className="block text-xs text-slate-500 mb-1">Price / Night</label>
                   <div className="relative">
-                    <DollarSign className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
-                    <input type="number" min="0" step="0.01"
+                    <span className={`absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold select-none ${
+                      editing ? "text-slate-600" : "text-slate-400"
+                    }`}>
+                      LKR
+                    </span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
                       value={data.pricePerNight}
                       disabled={!editing}
                       onChange={(e) => setEditingRoom((p) => ({ ...p, pricePerNight: e.target.value }))}
-                      className={`w-full border rounded-xl pl-7 pr-3 py-2 text-sm outline-none transition ${editing ? "border-blue-400 focus:ring-2 focus:ring-blue-100" : "border-slate-200 bg-slate-50 text-slate-400"}`}
+                      className={`w-full border rounded-xl pl-11 pr-3 py-2 text-sm outline-none transition ${
+                        editing
+                          ? "border-blue-400 focus:ring-2 focus:ring-blue-100"
+                          : "border-slate-200 bg-slate-50 text-slate-400"
+                      }`}
                     />
                   </div>
                 </div>
+
                 <div>
                   <label className="block text-xs text-slate-500 mb-1">Available</label>
                   <select
                     value={String(data.available)}
                     disabled={!editing}
                     onChange={(e) => setEditingRoom((p) => ({ ...p, available: e.target.value === "true" }))}
-                    className={`w-full border rounded-xl px-3 py-2 text-sm outline-none transition ${editing ? "border-blue-400 focus:ring-2 focus:ring-blue-100" : "border-slate-200 bg-slate-50 text-slate-400"}`}
+                    className={`w-full border rounded-xl px-3 py-2 text-sm outline-none transition ${
+                      editing
+                        ? "border-blue-400 focus:ring-2 focus:ring-blue-100"
+                        : "border-slate-200 bg-slate-50 text-slate-400"
+                    }`}
                   >
                     <option value="true">Yes</option>
                     <option value="false">No</option>
@@ -158,20 +192,39 @@ function ManageRoomsPage() {
                 </div>
               </div>
 
+              {/* ── Price display badge below the grid ──────────────────── */}
+              {!editing && (
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full">
+                    LKR {parseFloat(room.pricePerNight).toLocaleString("en-LK", { minimumFractionDigits: 2 })} / night
+                  </span>
+                  <span className="text-slate-400 text-xs">
+                    {room.availableCount}/{room.roomCount} rooms available
+                  </span>
+                </div>
+              )}
+
               <div className="flex gap-2">
                 {!editing ? (
-                  <button onClick={() => setEditingRoom({ ...room })}
-                    className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 px-4 py-2 rounded-xl text-sm font-semibold transition">
+                  <button
+                    onClick={() => setEditingRoom({ ...room })}
+                    className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 px-4 py-2 rounded-xl text-sm font-semibold transition"
+                  >
                     Edit Room
                   </button>
                 ) : (
                   <>
-                    <button onClick={saveRoom} disabled={saving}
-                      className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition shadow-md disabled:opacity-60">
+                    <button
+                      onClick={saveRoom}
+                      disabled={saving}
+                      className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition shadow-md disabled:opacity-60"
+                    >
                       <Save size={14} /> {saving ? "Saving..." : "Save Changes"}
                     </button>
-                    <button onClick={() => setEditingRoom(null)}
-                      className="bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2 rounded-xl text-sm font-semibold transition">
+                    <button
+                      onClick={() => setEditingRoom(null)}
+                      className="bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2 rounded-xl text-sm font-semibold transition"
+                    >
                       Cancel
                     </button>
                   </>

@@ -255,7 +255,7 @@ function GuideProfilePage() {
                 placeholder="e.g. 5" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Price per Day ($) *</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Price per Day (LKR) *</label>
               <div className="relative">
                 <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                 <input name="pricePerDay" type="number" min="0.01" step="0.01"
