@@ -11,7 +11,11 @@ function GuideDetailPage() {
   const navigate = useNavigate();
   const [guide, setGuide] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [bookingDate, setBookingDate] = useState("");
+
+  // ── Date range state ────────────────────────────────────────────────────────
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
   const [booking, setBooking] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState("");
   const [bookingError, setBookingError] = useState("");
@@ -23,21 +27,83 @@ function GuideDetailPage() {
       .finally(() => setLoading(false));
   }, [guideId]);
 
+  // ── Helpers ─────────────────────────────────────────────────────────────────
+  const today = new Date().toISOString().split("T")[0];
+
+  const lkr = (amount) =>
+    `LKR ${parseFloat(amount).toLocaleString("en-LK", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+
+  // Count days in range (inclusive)
+  const countDays = () => {
+    if (!startDate || !endDate) return 0;
+    const s = new Date(startDate);
+    const e = new Date(endDate);
+    if (e < s) return 0;
+    return Math.round((e - s) / (1000 * 60 * 60 * 24)) + 1;
+  };
+
+  const days = countDays();
+  const totalPrice = guide ? parseFloat(guide.pricePerDay) * Math.max(days, 1) : 0;
+
+  // ── Booking handler ─────────────────────────────────────────────────────────
   const handleBooking = async () => {
-    if (!bookingDate) { setBookingError("Please select a booking date"); return; }
-    setBookingError(""); setBooking(true);
+    setBookingError("");
+
+    if (!startDate) {
+      setBookingError("Please select a start date");
+      return;
+    }
+    if (!endDate) {
+      setBookingError("Please select an end date");
+      return;
+    }
+    if (new Date(endDate) < new Date(startDate)) {
+      setBookingError("End date must be on or after start date");
+      return;
+    }
+
+    setBooking(true);
     try {
       await api.post("/api/guide-bookings", {
         guideId: parseInt(guideId),
-        bookingDate,
-        totalPrice: guide.pricePerDay,
+        startDate,
+        endDate,
+        totalPrice: guide.pricePerDay, // per-day price; backend multiplies per row
       });
-      setBookingSuccess(`Booking requested for ${bookingDate}! Awaiting guide confirmation.`);
-      setBookingDate("");
+
+      const label = startDate === endDate
+        ? startDate
+        : `${startDate} to ${endDate}`;
+      setBookingSuccess(
+        `Booking request sent for ${label} (${days} day${days !== 1 ? "s" : ""})! Awaiting guide confirmation.`
+      );
+      setStartDate("");
+      setEndDate("");
     } catch (err) {
       setBookingError(err?.response?.data?.message || "Booking failed. Please try again.");
     } finally {
       setBooking(false);
+    }
+  };
+
+  // ── Quick-select: clicking an available date sets it as start or fills range ─
+  const handleDateChipClick = (date) => {
+    setBookingError("");
+    if (!startDate || (startDate && endDate)) {
+      // Fresh start
+      setStartDate(date);
+      setEndDate("");
+    } else {
+      // startDate already set — fill end or swap
+      if (date < startDate) {
+        setEndDate(startDate);
+        setStartDate(date);
+      } else {
+        setEndDate(date);
+      }
     }
   };
 
@@ -48,15 +114,6 @@ function GuideDetailPage() {
   );
 
   if (!guide) return null;
-
-  const today = new Date().toISOString().split("T")[0];
-
-  // ── Helper: format price in LKR ─────────────────────────────────────────────
-  const lkr = (amount) =>
-    `LKR ${parseFloat(amount).toLocaleString("en-LK", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -114,10 +171,10 @@ function GuideDetailPage() {
             <h2 className="font-bold text-slate-800 mb-4">Details</h2>
             <div className="space-y-3">
               {[
-                { icon: Clock,       label: "Experience", value: `${guide.experienceYears} years` },
-                { icon: Globe,       label: "Languages",  value: guide.languages?.join(", ") || "—" },
-                { icon: CalendarDays,label: "Available",  value: `${guide.availableDates?.length || 0} days open` },
-                { icon: Banknote,    label: "Rate",       value: `${lkr(guide.pricePerDay)} per day` },
+                { icon: Clock,        label: "Experience", value: `${guide.experienceYears} years` },
+                { icon: Globe,        label: "Languages",  value: guide.languages?.join(", ") || "—" },
+                { icon: CalendarDays, label: "Available",  value: `${guide.availableDates?.length || 0} days open` },
+                { icon: Banknote,     label: "Rate",       value: `${lkr(guide.pricePerDay)} per day` },
               ].map(({ icon: Icon, label, value }) => (
                 <div key={label} className="flex items-center justify-between border-b border-slate-100 pb-3 last:border-0 last:pb-0">
                   <span className="flex items-center gap-2 text-slate-500 text-sm">
@@ -129,25 +186,55 @@ function GuideDetailPage() {
             </div>
           </div>
 
-          {/* Available dates */}
+          {/* Available dates — click to set range */}
           {guide.availableDates?.length > 0 && (
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-              <h2 className="font-bold text-slate-800 mb-3">Available Dates</h2>
-              <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
-                {guide.availableDates.slice(0, 20).map((date) => (
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-bold text-slate-800">Available Dates</h2>
+                <span className="text-xs text-slate-400">
+                  Click to select · Click again to set range
+                </span>
+              </div>
+
+              {/* Selected range indicator */}
+              {startDate && (
+                <div className="mb-3 flex items-center gap-2 bg-blue-50 border border-blue-200 px-3 py-2 rounded-xl text-xs text-blue-700 font-medium">
+                  <CalendarDays size={13} />
+                  {endDate && endDate !== startDate
+                    ? `${startDate} → ${endDate} (${days} days)`
+                    : `From ${startDate} — select end date`}
                   <button
-                    key={date}
                     type="button"
-                    onClick={() => { setBookingDate(date); setBookingError(""); }}
-                    className={`text-xs px-3 py-1.5 rounded-xl font-medium border transition ${
-                      bookingDate === date
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "bg-slate-50 text-slate-600 border-slate-200 hover:border-blue-400 hover:text-blue-600"
-                    }`}
+                    onClick={() => { setStartDate(""); setEndDate(""); setBookingError(""); }}
+                    className="ml-auto text-blue-400 hover:text-blue-600 text-xs underline"
                   >
-                    {date}
+                    Clear
                   </button>
-                ))}
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-2 max-h-44 overflow-y-auto">
+                {guide.availableDates.slice(0, 30).map((date) => {
+                  const isStart  = date === startDate;
+                  const isEnd    = date === endDate;
+                  const inRange  = startDate && endDate && date > startDate && date < endDate;
+                  return (
+                    <button
+                      key={date}
+                      type="button"
+                      onClick={() => handleDateChipClick(date)}
+                      className={`text-xs px-3 py-1.5 rounded-xl font-medium border transition ${
+                        isStart || isEnd
+                          ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                          : inRange
+                          ? "bg-blue-100 text-blue-700 border-blue-300"
+                          : "bg-slate-50 text-slate-600 border-slate-200 hover:border-blue-400 hover:text-blue-600"
+                      }`}
+                    >
+                      {date}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -157,7 +244,7 @@ function GuideDetailPage() {
         <div className="md:col-span-1">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sticky top-4">
             <h2 className="font-bold text-slate-800 mb-1">Book This Guide</h2>
-            <p className="text-slate-400 text-xs mb-4">Select a date and send a booking request</p>
+            <p className="text-slate-400 text-xs mb-4">Choose a date range and send a booking request</p>
 
             {bookingSuccess ? (
               <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
@@ -178,15 +265,39 @@ function GuideDetailPage() {
                   </div>
                 )}
 
-                <div className="mb-4">
+                {/* Start date */}
+                <div className="mb-3">
                   <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                    Select Date
+                    Start Date
                   </label>
                   <input
                     type="date"
                     min={today}
-                    value={bookingDate}
-                    onChange={(e) => { setBookingDate(e.target.value); setBookingError(""); }}
+                    value={startDate}
+                    onChange={(e) => {
+                      setStartDate(e.target.value);
+                      setBookingError("");
+                      // If end date is now before start, reset it
+                      if (endDate && e.target.value > endDate) setEndDate("");
+                    }}
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition"
+                  />
+                </div>
+
+                {/* End date */}
+                <div className="mb-4">
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                    End Date
+                    <span className="text-slate-400 font-normal ml-1">(same as start = 1 day)</span>
+                  </label>
+                  <input
+                    type="date"
+                    min={startDate || today}
+                    value={endDate}
+                    onChange={(e) => {
+                      setEndDate(e.target.value);
+                      setBookingError("");
+                    }}
                     className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition"
                   />
                 </div>
@@ -199,23 +310,35 @@ function GuideDetailPage() {
                       {lkr(guide.pricePerDay)}
                     </span>
                   </div>
+                  {days > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-500">Number of days</span>
+                      <span className="font-semibold text-slate-800">{days}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-sm pt-2 border-t border-slate-200">
-                    <span className="font-bold text-slate-700">Total</span>
+                    <span className="font-bold text-slate-700">
+                      {days > 0 ? "Estimated Total" : "Total"}
+                    </span>
                     <span className="font-bold text-blue-600">
-                      {lkr(guide.pricePerDay)}
+                      {days > 0 ? lkr(totalPrice) : lkr(guide.pricePerDay)}
                     </span>
                   </div>
                 </div>
 
                 <button
                   onClick={handleBooking}
-                  disabled={booking}
-                  className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white py-2.5 rounded-xl font-semibold text-sm transition shadow-md shadow-blue-200"
+                  disabled={booking || !startDate || !endDate}
+                  className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white py-2.5 rounded-xl font-semibold text-sm transition shadow-md shadow-blue-200"
                 >
-                  {booking ? "Sending Request..." : "Send Booking Request"}
+                  {booking
+                    ? "Sending Request..."
+                    : days > 1
+                    ? `Book ${days} Days`
+                    : "Send Booking Request"}
                 </button>
                 <p className="text-xs text-slate-400 text-center mt-2">
-                  Guide must confirm your request
+                  Guide must confirm each day in your range
                 </p>
               </>
             )}

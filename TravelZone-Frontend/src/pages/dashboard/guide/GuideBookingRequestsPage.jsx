@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import api from "../../../api/axios";
 import {
   CalendarCheck, CheckCircle, XCircle, Clock,
-  Inbox, BadgeCheck, Banknote
+  Inbox, BadgeCheck, Banknote, CalendarRange
 } from "lucide-react";
 
 const STATUS_CONFIG = {
@@ -12,6 +12,56 @@ const STATUS_CONFIG = {
   CANCELLED: { bg: "bg-slate-100",  text: "text-slate-500",   border: "border-slate-200",   icon: XCircle,     dot: "bg-slate-400",   label: "Cancelled" },
   COMPLETED: { bg: "bg-blue-50",    text: "text-blue-700",    border: "border-blue-200",    icon: BadgeCheck,  dot: "bg-blue-400",    label: "Completed" },
 };
+
+// ─── Group consecutive bookings from the same tourist into range groups ───────
+// Two bookings are "same group" if: same touristId + same status +
+// created within 10 seconds of each other + dates are consecutive.
+function groupBookings(bookings) {
+  if (!bookings.length) return [];
+
+  // Sort by tourist → createdAt → bookingDate
+  const sorted = [...bookings].sort((a, b) => {
+    if (a.touristId !== b.touristId) return a.touristId - b.touristId;
+    return new Date(a.createdAt) - new Date(b.createdAt);
+  });
+
+  const groups = [];
+  let current = null;
+
+  for (const booking of sorted) {
+    const bookingCreated = new Date(booking.createdAt).getTime();
+    const withinWindow = current
+      && current.touristId === booking.touristId
+      && current.status    === booking.status
+      && Math.abs(bookingCreated - current.firstCreatedAt) < 15000; // 15-sec window
+
+    if (withinWindow) {
+      // Add to current group
+      current.bookings.push(booking);
+      current.totalPrice = (parseFloat(current.totalPrice) + parseFloat(booking.totalPrice)).toFixed(2);
+      // Track date range
+      if (booking.bookingDate < current.startDate) current.startDate = booking.bookingDate;
+      if (booking.bookingDate > current.endDate)   current.endDate   = booking.bookingDate;
+    } else {
+      if (current) groups.push(current);
+      current = {
+        groupId: booking.bookingId, // use first booking's ID as group key
+        primaryBookingId: booking.bookingId,
+        touristId: booking.touristId,
+        touristName: booking.touristName,
+        status: booking.status,
+        startDate: booking.bookingDate,
+        endDate: booking.bookingDate,
+        totalPrice: String(booking.totalPrice),
+        firstCreatedAt: bookingCreated,
+        createdAt: booking.createdAt,
+        bookings: [booking],
+      };
+    }
+  }
+  if (current) groups.push(current);
+  return groups;
+}
 
 function GuideBookingRequestsPage() {
   const [bookings, setBookings]           = useState([]);
@@ -31,11 +81,15 @@ function GuideBookingRequestsPage() {
 
   useEffect(() => { fetchBookings(); }, []);
 
-  const updateStatus = async (bookingId, status) => {
-    setActionLoading(bookingId + status);
+  // Update ALL bookings in a group with the same status
+  const updateGroupStatus = async (group, status) => {
+    setActionLoading(group.groupId + status);
     setError(""); setSuccess("");
     try {
-      await api.put(`/api/guide-bookings/${bookingId}/status`, { status });
+      // Update each booking in the group sequentially
+      for (const b of group.bookings) {
+        await api.put(`/api/guide-bookings/${b.bookingId}/status`, { status });
+      }
       const label =
         status === "CONFIRMED" ? "confirmed" :
         status === "REJECTED"  ? "rejected"  :
@@ -47,12 +101,20 @@ function GuideBookingRequestsPage() {
     } finally { setActionLoading(null); }
   };
 
-  const cancelBooking = async (bookingId) => {
-    if (!window.confirm("Cancel this booking?")) return;
-    setActionLoading(bookingId + "CANCEL");
+  // Cancel ALL bookings in a group
+  const cancelGroup = async (group) => {
+    if (!window.confirm(
+      group.bookings.length > 1
+        ? `Cancel all ${group.bookings.length} days of this booking?`
+        : "Cancel this booking?"
+    )) return;
+
+    setActionLoading(group.groupId + "CANCEL");
     setError(""); setSuccess("");
     try {
-      await api.delete(`/api/guide-bookings/${bookingId}`);
+      for (const b of group.bookings) {
+        await api.delete(`/api/guide-bookings/${b.bookingId}`);
+      }
       setSuccess("Booking cancelled successfully");
       fetchBookings();
     } catch (err) {
@@ -60,9 +122,10 @@ function GuideBookingRequestsPage() {
     } finally { setActionLoading(null); }
   };
 
-  const pending   = bookings.filter((b) => b.status === "PENDING");
-  const confirmed = bookings.filter((b) => b.status === "CONFIRMED");
-  const others    = bookings.filter((b) => b.status !== "PENDING" && b.status !== "CONFIRMED");
+  const groups   = groupBookings(bookings);
+  const pending   = groups.filter((g) => g.status === "PENDING");
+  const confirmed = groups.filter((g) => g.status === "CONFIRMED");
+  const others    = groups.filter((g) => g.status !== "PENDING" && g.status !== "CONFIRMED");
 
   if (loading) return (
     <div className="flex items-center justify-center h-64">
@@ -90,7 +153,7 @@ function GuideBookingRequestsPage() {
             </span>
           )}
           <span className="bg-slate-100 text-slate-600 border border-slate-200 text-xs px-3 py-1.5 rounded-full font-bold">
-            {bookings.length} total
+            {groups.length} total
           </span>
         </div>
       </div>
@@ -107,7 +170,7 @@ function GuideBookingRequestsPage() {
         </div>
       )}
 
-      {bookings.length === 0 ? (
+      {groups.length === 0 ? (
         <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-16 text-center">
           <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Inbox size={28} className="text-slate-300" />
@@ -126,14 +189,14 @@ function GuideBookingRequestsPage() {
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Awaiting Response</p>
               </div>
               <div className="space-y-3">
-                {pending.map((booking) => (
-                  <BookingCard
-                    key={booking.bookingId}
-                    booking={booking}
+                {pending.map((group) => (
+                  <BookingGroupCard
+                    key={group.groupId}
+                    group={group}
                     actionLoading={actionLoading}
-                    onConfirm={() => updateStatus(booking.bookingId, "CONFIRMED")}
-                    onReject={() => updateStatus(booking.bookingId, "REJECTED")}
-                    onCancel={() => cancelBooking(booking.bookingId)}
+                    onConfirm={() => updateGroupStatus(group, "CONFIRMED")}
+                    onReject={() => updateGroupStatus(group, "REJECTED")}
+                    onCancel={() => cancelGroup(group)}
                     showPendingActions
                   />
                 ))}
@@ -149,13 +212,13 @@ function GuideBookingRequestsPage() {
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Confirmed — Mark as Completed</p>
               </div>
               <div className="space-y-3">
-                {confirmed.map((booking) => (
-                  <BookingCard
-                    key={booking.bookingId}
-                    booking={booking}
+                {confirmed.map((group) => (
+                  <BookingGroupCard
+                    key={group.groupId}
+                    group={group}
                     actionLoading={actionLoading}
-                    onComplete={() => updateStatus(booking.bookingId, "COMPLETED")}
-                    onCancel={() => cancelBooking(booking.bookingId)}
+                    onComplete={() => updateGroupStatus(group, "COMPLETED")}
+                    onCancel={() => cancelGroup(group)}
                     showConfirmedActions
                   />
                 ))}
@@ -171,10 +234,10 @@ function GuideBookingRequestsPage() {
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Past Requests</p>
               </div>
               <div className="space-y-3">
-                {others.map((booking) => (
-                  <BookingCard
-                    key={booking.bookingId}
-                    booking={booking}
+                {others.map((group) => (
+                  <BookingGroupCard
+                    key={group.groupId}
+                    group={group}
                     actionLoading={actionLoading}
                   />
                 ))}
@@ -188,9 +251,9 @@ function GuideBookingRequestsPage() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-function BookingCard({
-  booking,
+// ─── Booking Group Card ───────────────────────────────────────────────────────
+function BookingGroupCard({
+  group,
   actionLoading,
   onConfirm,
   onReject,
@@ -199,9 +262,15 @@ function BookingCard({
   showPendingActions = false,
   showConfirmedActions = false,
 }) {
-  const cfg = STATUS_CONFIG[booking.status] || STATUS_CONFIG.PENDING;
+  const cfg = STATUS_CONFIG[group.status] || STATUS_CONFIG.PENDING;
   const StatusIcon = cfg.icon;
   const isProcessing = !!actionLoading;
+  const isMultiDay = group.startDate !== group.endDate;
+  const dayCount = group.bookings.length;
+
+  const dateLabel = isMultiDay
+    ? `${group.startDate} → ${group.endDate}`
+    : group.startDate;
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow p-5">
@@ -209,11 +278,18 @@ function BookingCard({
         {/* Tourist info */}
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-100 to-indigo-100 flex items-center justify-center text-indigo-600 font-black text-lg flex-shrink-0">
-            {booking.touristName?.charAt(0)?.toUpperCase()}
+            {group.touristName?.charAt(0)?.toUpperCase()}
           </div>
           <div>
-            <p className="font-bold text-slate-800">{booking.touristName}</p>
-            <p className="text-slate-400 text-xs">Booking #{booking.bookingId}</p>
+            <p className="font-bold text-slate-800">{group.touristName}</p>
+            <p className="text-slate-400 text-xs">
+              Booking #{group.primaryBookingId}
+              {isMultiDay && (
+                <span className="ml-1.5 bg-indigo-50 text-indigo-600 border border-indigo-200 px-1.5 py-0.5 rounded-md text-xs font-semibold">
+                  {dayCount} days
+                </span>
+              )}
+            </p>
           </div>
         </div>
 
@@ -227,15 +303,25 @@ function BookingCard({
       {/* Meta info */}
       <div className="flex items-center gap-5 mt-4 text-sm text-slate-500">
         <span className="flex items-center gap-1.5">
-          <CalendarCheck size={14} className="text-blue-400" />
-          {booking.bookingDate}
+          {isMultiDay
+            ? <CalendarRange size={14} className="text-blue-400" />
+            : <CalendarCheck size={14} className="text-blue-400" />
+          }
+          <span className="text-slate-700 font-medium">{dateLabel}</span>
         </span>
         <span className="flex items-center gap-1.5">
-          {/* ✅ Changed: DollarSign → Banknote, $ → LKR */}
           <Banknote size={14} className="text-emerald-400" />
           <span className="font-bold text-slate-700">
-            LKR {parseFloat(booking.totalPrice).toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            LKR {parseFloat(group.totalPrice).toLocaleString("en-LK", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
           </span>
+          {isMultiDay && (
+            <span className="text-slate-400 text-xs">
+              ({dayCount} × LKR {parseFloat(group.bookings[0].totalPrice).toLocaleString("en-LK", { minimumFractionDigits: 2 })})
+            </span>
+          )}
         </span>
       </div>
 
@@ -248,7 +334,7 @@ function BookingCard({
             className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-white px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm"
           >
             <CheckCircle size={14} />
-            {actionLoading === booking.bookingId + "CONFIRMED" ? "Confirming..." : "Confirm"}
+            {actionLoading === group.groupId + "CONFIRMED" ? "Confirming..." : "Confirm"}
           </button>
           <button
             onClick={onReject}
@@ -256,14 +342,14 @@ function BookingCard({
             className="flex items-center gap-1.5 bg-red-50 hover:bg-red-100 disabled:opacity-50 text-red-600 border border-red-200 px-4 py-2 rounded-xl text-xs font-bold transition"
           >
             <XCircle size={14} />
-            {actionLoading === booking.bookingId + "REJECTED" ? "Rejecting..." : "Reject"}
+            {actionLoading === group.groupId + "REJECTED" ? "Rejecting..." : "Reject"}
           </button>
           <button
             onClick={onCancel}
             disabled={isProcessing}
             className="ml-auto bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-500 px-4 py-2 rounded-xl text-xs font-bold transition"
           >
-            {actionLoading === booking.bookingId + "CANCEL" ? "Cancelling..." : "Cancel"}
+            {actionLoading === group.groupId + "CANCEL" ? "Cancelling..." : "Cancel"}
           </button>
         </div>
       )}
@@ -277,14 +363,14 @@ function BookingCard({
             className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-5 py-2 rounded-xl text-xs font-bold transition shadow-sm"
           >
             <BadgeCheck size={14} />
-            {actionLoading === booking.bookingId + "COMPLETED" ? "Saving..." : "Mark as Completed"}
+            {actionLoading === group.groupId + "COMPLETED" ? "Saving..." : "Mark as Completed"}
           </button>
           <button
             onClick={onCancel}
             disabled={isProcessing}
             className="ml-auto bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-500 px-4 py-2 rounded-xl text-xs font-bold transition"
           >
-            {actionLoading === booking.bookingId + "CANCEL" ? "Cancelling..." : "Cancel"}
+            {actionLoading === group.groupId + "CANCEL" ? "Cancelling..." : "Cancel"}
           </button>
         </div>
       )}
