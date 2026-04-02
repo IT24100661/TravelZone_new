@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../../api/axios";
-import { Search, Star, MapPin, DollarSign, User } from "lucide-react";
+import { Search, Star, MapPin, User } from "lucide-react";
 
 function GuidesPage() {
   const navigate = useNavigate();
@@ -110,7 +110,11 @@ function GuidesPage() {
               >
                 <div className="h-32 bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
                   {guide.profilePhoto ? (
-                    <img src={guide.profilePhoto} alt={guide.name} className="w-24 h-24 rounded-full object-cover border-4 border-white shadow" />
+                    <img
+                      src={guide.profilePhoto}
+                      alt={guide.name}
+                      className="w-24 h-24 rounded-full object-cover border-4 border-white shadow"
+                    />
                   ) : (
                     <div className="w-20 h-20 rounded-full bg-blue-200 flex items-center justify-center text-blue-600 font-bold text-2xl">
                       {guide.name?.charAt(0)}
@@ -118,15 +122,17 @@ function GuidesPage() {
                   )}
                 </div>
                 <div className="p-4">
-                  <h3 className="font-bold text-slate-800 group-hover:text-blue-600 transition">{guide.name}</h3>
+                  <h3 className="font-bold text-slate-800 group-hover:text-blue-600 transition">
+                    {guide.name}
+                  </h3>
                   <div className="flex items-center justify-between mt-2">
                     <span className="flex items-center gap-1 text-amber-500 text-sm font-semibold">
                       <Star size={14} fill="currentColor" />
                       {guide.rating?.toFixed(1) || "0.0"}
                     </span>
-                    <span className="flex items-center gap-1 text-emerald-600 text-sm font-semibold">
-                      <DollarSign size={14} />
-                      {parseFloat(guide.pricePerDay).toFixed(0)}/day
+                    {/* ✅ Changed $ to LKR */}
+                    <span className="text-emerald-600 text-sm font-semibold">
+                      LKR {parseFloat(guide.pricePerDay).toLocaleString()}/day
                     </span>
                   </div>
                   <button className="mt-3 w-full bg-blue-50 group-hover:bg-blue-600 group-hover:text-white text-blue-600 text-sm py-2 rounded-xl font-semibold transition">
@@ -162,4 +168,3 @@ function GuidesPage() {
 }
 
 export default GuidesPage;
-
