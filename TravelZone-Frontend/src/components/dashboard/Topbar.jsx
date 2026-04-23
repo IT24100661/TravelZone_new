@@ -1,6 +1,6 @@
 import { useAuth } from "../../auth/AuthContext";
-import { Bell } from "lucide-react";
 import ThemeToggle from "../ui/ThemeToggle";
+import NotificationPanel from "../ui/NotificationPanel";
 
 const roleTheme = {
   TOURIST:     { bg: "#d1fae5", text: "#065f46", shadow: "#6ee7b7" },
@@ -20,22 +20,18 @@ function Topbar() {
   const { user } = useAuth();
 
   const today = new Date().toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
+    weekday: "long", month: "long", day: "numeric",
   });
 
   const role    = user?.role || "TOURIST";
-  const theme   = roleTheme[role]         || roleTheme.GUIDE;
+  const theme   = roleTheme[role]          || roleTheme.GUIDE;
   const avatar  = roleAvatarGradient[role] || roleAvatarGradient.GUIDE;
-  const initial = user?.name?.charAt(0)?.toUpperCase() || "?";
+  const initial   = user?.name?.charAt(0)?.toUpperCase() || "?";
   const firstName = user?.name?.split(" ")[0] || "there";
 
   return (
     <>
-      {/* ── Inline styles ── */}
       <style>{`
-        /* ── Topbar shell ── */
         .topbar {
           position: sticky; top: 0; z-index: 40;
           display: flex; align-items: center; justify-content: space-between;
@@ -45,13 +41,8 @@ function Topbar() {
           backdrop-filter: blur(12px);
           -webkit-backdrop-filter: blur(12px);
           transition: background 0.3s ease, border-color 0.3s ease;
-          box-shadow:
-            0 1px 0px var(--tz-border),
-            0 4px 16px rgba(0,0,0,0.04),
-            0 1px 3px rgba(0,0,0,0.03);
+          box-shadow: 0 1px 0px var(--tz-border), 0 4px 16px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03);
         }
-
-        /* ── Role badge ── */
         .role-badge {
           position: relative; overflow: hidden;
           display: inline-flex; align-items: center;
@@ -70,85 +61,7 @@ function Topbar() {
           background: linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 100%);
           pointer-events: none;
         }
-        .role-badge:hover {
-          transform: translateY(-2px);
-        }
-
-        /* ── Bell button ── */
-        .bell-btn {
-          position: relative;
-          width: 2.4rem; height: 2.4rem;
-          display: flex; align-items: center; justify-content: center;
-          border: none; cursor: pointer;
-          border-radius: 0.875rem;
-          background: linear-gradient(175deg,
-            var(--tz-surface-2, #f1f5f9) 0%,
-            var(--tz-border,    #e2e8f0) 100%);
-          color: var(--tz-text-muted);
-          transform: translateY(-1px);
-          box-shadow:
-            0 3px 0px rgba(0,0,0,0.10),
-            0 4px 12px rgba(0,0,0,0.07),
-            inset 0 1px 0px rgba(255,255,255,0.6);
-          transition: transform 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
-          overflow: hidden;
-        }
-        .bell-btn::before {
-          content: "";
-          position: absolute; top: 3px; left: 15%; width: 70%; height: 38%;
-          border-radius: 999px;
-          background: linear-gradient(180deg, rgba(255,255,255,0.5) 0%, transparent 100%);
-          pointer-events: none;
-        }
-        .bell-btn svg { position: relative; z-index: 2; }
-        .bell-btn:hover {
-          transform: translateY(-3px);
-          color: var(--tz-text);
-          box-shadow:
-            0 5px 0px rgba(0,0,0,0.12),
-            0 8px 20px rgba(0,0,0,0.10),
-            inset 0 1px 0px rgba(255,255,255,0.6);
-        }
-        .bell-btn:active {
-          transform: translateY(1px);
-          box-shadow:
-            0 1px 0px rgba(0,0,0,0.10),
-            0 2px 6px rgba(0,0,0,0.07),
-            inset 0 1px 0px rgba(255,255,255,0.4);
-        }
-
-        /* ── Dark mode bell ── */
-        .dark .bell-btn {
-          background: linear-gradient(175deg, #1e293b 0%, #273344 50%, #1e293b 100%);
-          box-shadow:
-            0 3px 0px #0f172a,
-            0 4px 12px rgba(0,0,0,0.35),
-            inset 0 1px 0px rgba(255,255,255,0.07);
-        }
-        .dark .bell-btn:hover {
-          box-shadow:
-            0 5px 0px #0f172a,
-            0 8px 20px rgba(0,0,0,0.45),
-            inset 0 1px 0px rgba(255,255,255,0.07);
-        }
-
-        /* ── Notification dot ── */
-        .notif-dot {
-          position: absolute; top: 6px; right: 6px;
-          width: 8px; height: 8px;
-          background: #3b82f6;
-          border-radius: 999px;
-          border: 2px solid var(--tz-surface);
-          box-shadow: 0 0 0 2px rgba(59,130,246,0.35);
-          z-index: 3;
-          animation: pulse-dot 2s ease-in-out infinite;
-        }
-        @keyframes pulse-dot {
-          0%, 100% { box-shadow: 0 0 0 2px rgba(59,130,246,0.35); }
-          50%       { box-shadow: 0 0 0 4px rgba(59,130,246,0.15); }
-        }
-
-        /* ── Avatar 3D ── */
+        .role-badge:hover { transform: translateY(-2px); }
         .topbar-avatar {
           position: relative; overflow: hidden;
           width: 2.4rem; height: 2.4rem;
@@ -158,8 +71,7 @@ function Topbar() {
           color: #fff;
           transform: translateY(-1px);
           transition: transform 0.15s ease, box-shadow 0.15s ease;
-          cursor: default;
-          user-select: none;
+          cursor: default; user-select: none;
         }
         .topbar-avatar::before {
           content: "";
@@ -175,41 +87,22 @@ function Topbar() {
           background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.25) 100%);
           pointer-events: none; z-index: 0;
         }
-        .topbar-avatar span {
-          position: relative; z-index: 2;
-          text-shadow: 0 1px 3px rgba(0,0,0,0.3);
-        }
-        .topbar-avatar:hover {
-          transform: translateY(-3px);
-        }
-
-        /* ── Greeting ── */
-        .topbar-greeting-date {
-          font-size: 0.72rem;
-          font-weight: 500;
-          color: var(--tz-text-muted);
-          letter-spacing: 0.01em;
-        }
-        .topbar-greeting-name {
-          font-size: 1rem;
-          font-weight: 800;
-          color: var(--tz-text);
-          line-height: 1.3;
-          margin-top: 0.05rem;
-        }
+        .topbar-avatar span { position: relative; z-index: 2; text-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+        .topbar-avatar:hover { transform: translateY(-3px); }
+        .topbar-greeting-date { font-size: 0.72rem; font-weight: 500; color: var(--tz-text-muted); letter-spacing: 0.01em; }
+        .topbar-greeting-name { font-size: 1rem; font-weight: 800; color: var(--tz-text); line-height: 1.3; margin-top: 0.05rem; }
+        @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
 
       <header className="topbar">
 
-        {/* ── LEFT: Greeting ── */}
+        {/* LEFT: Greeting */}
         <div>
           <p className="topbar-greeting-date">{today}</p>
-          <h2 className="topbar-greeting-name">
-            Hey, {firstName} 👋
-          </h2>
+          <h2 className="topbar-greeting-name">Hey, {firstName} 👋</h2>
         </div>
 
-        {/* ── RIGHT: Actions ── */}
+        {/* RIGHT: Actions */}
         <div className="flex items-center gap-2.5">
 
           {/* Role badge */}
@@ -224,14 +117,11 @@ function Topbar() {
             {role.replace("_", " ")}
           </span>
 
-          {/* Theme Toggle — uses your existing ThemeToggle component */}
+          {/* Theme toggle */}
           <ThemeToggle variant="icon" />
 
-          {/* Notification bell */}
-          <button className="bell-btn" aria-label="Notifications">
-            <Bell size={15} />
-            <span className="notif-dot" />
-          </button>
+          {/* ── Notification panel (replaces old static bell button) ── */}
+          <NotificationPanel />
 
           {/* Avatar */}
           <div

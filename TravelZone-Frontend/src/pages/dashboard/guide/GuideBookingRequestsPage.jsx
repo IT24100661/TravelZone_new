@@ -35,17 +35,17 @@ function groupBookings(bookings) {
     } else {
       if (current) groups.push(current);
       current = {
-        groupId: booking.bookingId,
+        groupId:         booking.bookingId,
         primaryBookingId: booking.bookingId,
-        touristId: booking.touristId,
-        touristName: booking.touristName,
-        status: booking.status,
-        startDate: booking.bookingDate,
-        endDate: booking.bookingDate,
-        totalPrice: String(booking.totalPrice),
-        firstCreatedAt: bookingCreated,
-        createdAt: booking.createdAt,
-        bookings: [booking],
+        touristId:       booking.touristId,
+        touristName:     booking.touristName,
+        status:          booking.status,
+        startDate:       booking.bookingDate,
+        endDate:         booking.bookingDate,
+        totalPrice:      String(booking.totalPrice),
+        firstCreatedAt:  bookingCreated,
+        createdAt:       booking.createdAt,
+        bookings:        [booking],
       };
     }
   }
@@ -53,6 +53,78 @@ function groupBookings(bookings) {
   return groups;
 }
 
+/* ═══════════════════════════════════════════════════════
+   RED BUTTON — fully inline, immune to dark-mode override
+═══════════════════════════════════════════════════════ */
+function RedButton({ onClick, disabled, icon: Icon, children, style: extra = {} }) {
+  const [hovered, setHovered] = useState(false);
+  const [active,  setActive]  = useState(false);
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => { setHovered(false); setActive(false); }}
+      onMouseDown={() => setActive(true)}
+      onMouseUp={() => setActive(false)}
+      style={{
+        position: "relative",
+        overflow: "hidden",
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "0.35rem",
+        fontWeight: 700,
+        fontSize: "0.82rem",
+        letterSpacing: "0.02em",
+        color: "#fff",
+        border: "none",
+        borderRadius: "0.75rem",
+        cursor: disabled ? "not-allowed" : "pointer",
+        outline: "none",
+        fontFamily: "inherit",
+        WebkitFontSmoothing: "antialiased",
+        background: "linear-gradient(175deg, #7f1d1d 0%, #991b1b 35%, #b91c1c 70%, #dc2626 100%)",
+        transform: active
+          ? "translateY(1px)"
+          : hovered ? "translateY(-3px)" : "translateY(-2px)",
+        boxShadow: active
+          ? "0 2px 0px #450a0a, 0 4px 10px rgba(185,28,28,0.3)"
+          : hovered
+          ? "0 6px 0px #450a0a, 0 12px 24px rgba(185,28,28,0.55), 0 4px 8px rgba(0,0,0,0.3)"
+          : "0 4px 0px #450a0a, 0 8px 18px rgba(185,28,28,0.45), 0 2px 6px rgba(0,0,0,0.3)",
+        opacity: disabled ? 0.55 : 1,
+        transition: "transform 0.15s cubic-bezier(0.22,1,0.36,1), box-shadow 0.15s ease",
+        ...extra,
+      }}
+    >
+      {/* Gloss */}
+      <span style={{
+        position: "absolute", top: "3px", left: "14%", width: "72%", height: "38%",
+        borderRadius: "999px", pointerEvents: "none",
+        background: "linear-gradient(180deg, rgba(255,255,255,0.28) 0%, transparent 100%)",
+      }} />
+      {/* Bottom vignette */}
+      <span style={{
+        position: "absolute", bottom: 0, left: 0, width: "100%", height: "40%",
+        borderRadius: "0 0 0.75rem 0.75rem", pointerEvents: "none",
+        background: "linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.28) 100%)",
+      }} />
+      {Icon && (
+        <Icon size={12} style={{ position: "relative", zIndex: 2, color: "#fff", flexShrink: 0 }} />
+      )}
+      <span style={{ position: "relative", zIndex: 2, color: "#fff" }}>
+        {children}
+      </span>
+    </button>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════
+   MAIN PAGE
+═══════════════════════════════════════════════════════ */
 function GuideBookingRequestsPage() {
   const [bookings, setBookings]           = useState([]);
   const [loading, setLoading]             = useState(true);
@@ -121,7 +193,9 @@ function GuideBookingRequestsPage() {
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-black text-[var(--tz-text)]">Booking Requests</h1>
-          <p className="text-[var(--tz-text-muted)] text-sm mt-0.5">Manage tourist requests for your guide services</p>
+          <p className="text-[var(--tz-text-muted)] text-sm mt-0.5">
+            Manage tourist requests for your guide services
+          </p>
         </div>
 
         {/* Summary badges */}
@@ -130,10 +204,10 @@ function GuideBookingRequestsPage() {
             <span
               className="text-xs px-3 py-1.5 rounded-full font-bold animate-pulse"
               style={{
-                background:  "rgba(245,158,11,0.12)",
-                color:       "#f59e0b",
-                border:      "1px solid rgba(245,158,11,0.25)",
-                boxShadow:   "0 2px 0px rgba(245,158,11,0.15)",
+                background: "rgba(245,158,11,0.12)",
+                color:      "#f59e0b",
+                border:     "1px solid rgba(245,158,11,0.25)",
+                boxShadow:  "0 2px 0px rgba(245,158,11,0.15)",
               }}
             >
               {pending.length} pending
@@ -155,10 +229,10 @@ function GuideBookingRequestsPage() {
           <span
             className="text-xs px-3 py-1.5 rounded-full font-bold"
             style={{
-              background:  "var(--tz-surface-2)",
-              color:       "var(--tz-text-muted)",
-              border:      "1px solid var(--tz-border)",
-              boxShadow:   "0 2px 0px rgba(0,0,0,0.06)",
+              background: "var(--tz-surface-2)",
+              color:      "var(--tz-text-muted)",
+              border:     "1px solid var(--tz-border)",
+              boxShadow:  "0 2px 0px rgba(0,0,0,0.06)",
             }}
           >
             {groups.length} total
@@ -171,13 +245,14 @@ function GuideBookingRequestsPage() {
         <div
           className="rounded-2xl px-4 py-3 text-sm flex items-center gap-2 font-medium"
           style={{
-            background:  "rgba(16,185,129,0.08)",
-            color:       "#10b981",
-            border:      "1px solid rgba(16,185,129,0.2)",
-            boxShadow:   "0 2px 0px rgba(16,185,129,0.1)",
+            background: "rgba(16,185,129,0.08)",
+            color:      "#10b981",
+            border:     "1px solid rgba(16,185,129,0.2)",
+            boxShadow:  "0 2px 0px rgba(16,185,129,0.1)",
           }}
         >
-          <div className="w-5 h-5 rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center icon-3d flex-shrink-0"
+          <div
+            className="w-5 h-5 rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center icon-3d flex-shrink-0"
             style={{ boxShadow: "0 2px 0px rgba(4,120,87,0.3)" }}
           >
             <CheckCircle size={11} className="text-white" />
@@ -213,7 +288,9 @@ function GuideBookingRequestsPage() {
             <Inbox size={28} className="text-[var(--tz-text-faint)]" />
           </div>
           <h3 className="text-[var(--tz-text)] font-bold text-lg">No requests yet</h3>
-          <p className="text-[var(--tz-text-muted)] text-sm mt-1">Tourists will appear here once they book you</p>
+          <p className="text-[var(--tz-text-muted)] text-sm mt-1">
+            Tourists will appear here once they book you
+          </p>
         </div>
       ) : (
         <div className="space-y-8">
@@ -223,7 +300,9 @@ function GuideBookingRequestsPage() {
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
-                <p className="text-xs font-bold text-[var(--tz-text-faint)] uppercase tracking-widest">Awaiting Response</p>
+                <p className="text-xs font-bold text-[var(--tz-text-faint)] uppercase tracking-widest">
+                  Awaiting Response
+                </p>
               </div>
               <div className="space-y-3">
                 {pending.map((group) => (
@@ -235,6 +314,7 @@ function GuideBookingRequestsPage() {
                     onReject={() => updateGroupStatus(group, "REJECTED")}
                     onCancel={() => cancelGroup(group)}
                     showPendingActions
+                    RedButton={RedButton}
                   />
                 ))}
               </div>
@@ -246,7 +326,9 @@ function GuideBookingRequestsPage() {
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <span className="w-2 h-2 bg-emerald-400 rounded-full" />
-                <p className="text-xs font-bold text-[var(--tz-text-faint)] uppercase tracking-widest">Confirmed — Mark as Completed</p>
+                <p className="text-xs font-bold text-[var(--tz-text-faint)] uppercase tracking-widest">
+                  Confirmed — Mark as Completed
+                </p>
               </div>
               <div className="space-y-3">
                 {confirmed.map((group) => (
@@ -257,6 +339,7 @@ function GuideBookingRequestsPage() {
                     onComplete={() => updateGroupStatus(group, "COMPLETED")}
                     onCancel={() => cancelGroup(group)}
                     showConfirmedActions
+                    RedButton={RedButton}
                   />
                 ))}
               </div>
@@ -268,7 +351,9 @@ function GuideBookingRequestsPage() {
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <span className="w-2 h-2 rounded-full" style={{ background: "var(--tz-text-faint)" }} />
-                <p className="text-xs font-bold text-[var(--tz-text-faint)] uppercase tracking-widest">Past Requests</p>
+                <p className="text-xs font-bold text-[var(--tz-text-faint)] uppercase tracking-widest">
+                  Past Requests
+                </p>
               </div>
               <div className="space-y-3">
                 {others.map((group) => (
@@ -276,6 +361,7 @@ function GuideBookingRequestsPage() {
                     key={group.groupId}
                     group={group}
                     actionLoading={actionLoading}
+                    RedButton={RedButton}
                   />
                 ))}
               </div>
@@ -295,9 +381,9 @@ function BookingGroupCard({
   onConfirm, onReject, onComplete, onCancel,
   showPendingActions   = false,
   showConfirmedActions = false,
+  RedButton,
 }) {
-  const cfg        = STATUS_CONFIG[group.status] || STATUS_CONFIG.PENDING;
-  const StatusIcon = cfg.icon;
+  const cfg          = STATUS_CONFIG[group.status] || STATUS_CONFIG.PENDING;
   const isProcessing = !!actionLoading;
   const isMultiDay   = group.startDate !== group.endDate;
   const dayCount     = group.bookings.length;
@@ -315,12 +401,12 @@ function BookingGroupCard({
         transform:   "translateY(-1px)",
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform  = "translateY(-3px)";
-        e.currentTarget.style.boxShadow  = "0 5px 0px rgba(0,0,0,0.1), 0 10px 24px rgba(0,0,0,0.10)";
+        e.currentTarget.style.transform = "translateY(-3px)";
+        e.currentTarget.style.boxShadow = "0 5px 0px rgba(0,0,0,0.1), 0 10px 24px rgba(0,0,0,0.10)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.transform  = "translateY(-1px)";
-        e.currentTarget.style.boxShadow  = "0 3px 0px rgba(0,0,0,0.08), 0 6px 18px rgba(0,0,0,0.07)";
+        e.currentTarget.style.transform = "translateY(-1px)";
+        e.currentTarget.style.boxShadow = "0 3px 0px rgba(0,0,0,0.08), 0 6px 18px rgba(0,0,0,0.07)";
       }}
     >
       <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -329,7 +415,9 @@ function BookingGroupCard({
         <div className="flex items-center gap-3">
           <div
             className="w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-400 to-indigo-500 flex items-center justify-center text-white font-black text-lg flex-shrink-0 icon-3d"
-            style={{ boxShadow: "0 3px 0px #3730a3, 0 6px 14px rgba(99,102,241,0.4), inset 0 1px 0 rgba(255,255,255,0.25)" }}
+            style={{
+              boxShadow: "0 3px 0px #3730a3, 0 6px 14px rgba(99,102,241,0.4), inset 0 1px 0 rgba(255,255,255,0.25)",
+            }}
           >
             {group.touristName?.charAt(0)?.toUpperCase()}
           </div>
@@ -341,9 +429,9 @@ function BookingGroupCard({
                 <span
                   className="text-xs font-semibold px-1.5 py-0.5 rounded-md"
                   style={{
-                    background:  "rgba(99,102,241,0.1)",
-                    color:       "#818cf8",
-                    border:      "1px solid rgba(99,102,241,0.2)",
+                    background: "rgba(99,102,241,0.1)",
+                    color:      "#818cf8",
+                    border:     "1px solid rgba(99,102,241,0.2)",
                   }}
                 >
                   {dayCount} days
@@ -357,10 +445,10 @@ function BookingGroupCard({
         <span
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold"
           style={{
-            background:  cfg.bg,
-            color:       cfg.text,
-            border:      `1px solid ${cfg.border}`,
-            boxShadow:   `0 2px 0px ${cfg.border}`,
+            background: cfg.bg,
+            color:      cfg.text,
+            border:     `1px solid ${cfg.border}`,
+            boxShadow:  `0 2px 0px ${cfg.border}`,
           }}
         >
           <span className="w-1.5 h-1.5 rounded-full" style={{ background: cfg.dot }} />
@@ -372,29 +460,43 @@ function BookingGroupCard({
       <div className="flex items-center flex-wrap gap-5 mt-4 text-sm">
         <span className="flex items-center gap-1.5 text-[var(--tz-text-muted)]">
           {isMultiDay
-            ? <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center icon-3d"
-                style={{ boxShadow: "0 2px 0px #1e3a8a", minWidth: "1.5rem" }}>
+            ? (
+              <div
+                className="w-6 h-6 rounded-lg bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center icon-3d"
+                style={{ boxShadow: "0 2px 0px #1e3a8a", minWidth: "1.5rem" }}
+              >
                 <CalendarRange size={11} className="text-white" />
               </div>
-            : <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-blue-400 to-sky-500 flex items-center justify-center icon-3d"
-                style={{ boxShadow: "0 2px 0px #1e3a8a", minWidth: "1.5rem" }}>
+            ) : (
+              <div
+                className="w-6 h-6 rounded-lg bg-gradient-to-br from-blue-400 to-sky-500 flex items-center justify-center icon-3d"
+                style={{ boxShadow: "0 2px 0px #1e3a8a", minWidth: "1.5rem" }}
+              >
                 <CalendarCheck size={11} className="text-white" />
               </div>
+            )
           }
           <span className="text-[var(--tz-text)] font-semibold">{dateLabel}</span>
         </span>
 
         <span className="flex items-center gap-1.5 text-[var(--tz-text-muted)]">
-          <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center icon-3d"
-            style={{ boxShadow: "0 2px 0px rgba(4,120,87,0.3)", minWidth: "1.5rem" }}>
+          <div
+            className="w-6 h-6 rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center icon-3d"
+            style={{ boxShadow: "0 2px 0px rgba(4,120,87,0.3)", minWidth: "1.5rem" }}
+          >
             <Banknote size={11} className="text-white" />
           </div>
           <span className="font-bold text-[var(--tz-text)]">
-            LKR {parseFloat(group.totalPrice).toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            LKR {parseFloat(group.totalPrice).toLocaleString("en-LK", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
           </span>
           {isMultiDay && (
             <span className="text-[var(--tz-text-faint)] text-xs">
-              ({dayCount} × LKR {parseFloat(group.bookings[0].totalPrice).toLocaleString("en-LK", { minimumFractionDigits: 2 })})
+              ({dayCount} × LKR {parseFloat(group.bookings[0].totalPrice).toLocaleString("en-LK", {
+                minimumFractionDigits: 2,
+              })})
             </span>
           )}
         </span>
@@ -406,7 +508,7 @@ function BookingGroupCard({
           className="flex items-center gap-2 mt-4 pt-4 flex-wrap"
           style={{ borderTop: "1px solid var(--tz-border-soft)" }}
         >
-          {/* Confirm — green 3D */}
+          {/* Confirm — emerald 3D */}
           <Btn3D
             color="emerald"
             disabled={isProcessing}
@@ -415,18 +517,17 @@ function BookingGroupCard({
             label={actionLoading === group.groupId + "CONFIRMED" ? "Confirming..." : "Confirm"}
           />
 
-          {/* Reject — red 3D */}
-          <button
+          {/* Reject — RedButton (immune to dark mode) */}
+          <RedButton
             onClick={onReject}
             disabled={isProcessing}
-            className="btn-3d-red"
-            style={{ padding: "0.5rem 1rem", opacity: isProcessing ? 0.5 : 1 }}
+            icon={XCircle}
+            style={{ padding: "0.5rem 1rem" }}
           >
-            <XCircle size={14} />
             <span className="text-xs font-bold">
               {actionLoading === group.groupId + "REJECTED" ? "Rejecting..." : "Reject"}
             </span>
-          </button>
+          </RedButton>
 
           {/* Cancel — slate 3D */}
           <button
@@ -478,14 +579,14 @@ function BookingGroupCard({
   );
 }
 
-/* ── Reusable inline 3D button (for Confirm/emerald) ── */
+/* ── Reusable inline 3D button (Confirm/emerald) ── */
 function Btn3D({ color, onClick, disabled, icon, label }) {
   const palette = {
     emerald: {
-      bg:     "linear-gradient(175deg, #065f46 0%, #059669 45%, #10b981 75%, #34d399 100%)",
-      shadow: "0 4px 0px #064e3b, 0 6px 16px rgba(16,185,129,0.4), 0 2px 6px rgba(0,0,0,0.25)",
-      hoverS: "0 6px 0px #064e3b, 0 10px 24px rgba(16,185,129,0.5)",
-      activeS:"0 1px 0px #064e3b, 0 2px 6px rgba(16,185,129,0.2)",
+      bg:      "linear-gradient(175deg, #065f46 0%, #059669 45%, #10b981 75%, #34d399 100%)",
+      shadow:  "0 4px 0px #064e3b, 0 6px 16px rgba(16,185,129,0.4), 0 2px 6px rgba(0,0,0,0.25)",
+      hoverS:  "0 6px 0px #064e3b, 0 10px 24px rgba(16,185,129,0.5)",
+      activeS: "0 1px 0px #064e3b, 0 2px 6px rgba(16,185,129,0.2)",
     },
   };
   const p = palette[color];
@@ -507,7 +608,7 @@ function Btn3D({ color, onClick, disabled, icon, label }) {
       style={style}
       onMouseEnter={() => !disabled && setStyle((s) => ({ ...s, transform: "translateY(-4px)", boxShadow: p.hoverS }))}
       onMouseLeave={() => !disabled && setStyle((s) => ({ ...s, transform: "translateY(-2px)", boxShadow: p.shadow }))}
-      onMouseDown={() => !disabled && setStyle((s) => ({ ...s, transform: "translateY(1px)", boxShadow: p.activeS }))}
+      onMouseDown={() => !disabled && setStyle((s) => ({ ...s, transform: "translateY(1px)",  boxShadow: p.activeS }))}
       onMouseUp={() => !disabled && setStyle((s) => ({ ...s, transform: "translateY(-2px)", boxShadow: p.shadow }))}
     >
       {/* Gloss */}
@@ -516,7 +617,10 @@ function Btn3D({ color, onClick, disabled, icon, label }) {
         borderRadius: "999px", pointerEvents: "none",
         background: "linear-gradient(180deg, rgba(255,255,255,0.35) 0%, transparent 100%)",
       }} />
-      <span style={{ position: "relative", zIndex: 2, display: "flex", alignItems: "center", gap: "0.375rem" }}>
+      <span style={{
+        position: "relative", zIndex: 2,
+        display: "flex", alignItems: "center", gap: "0.375rem",
+      }}>
         {icon}{label}
       </span>
     </button>

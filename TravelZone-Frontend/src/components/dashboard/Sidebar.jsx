@@ -2,7 +2,8 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, User, MapPinned, Building2,
   CalendarCheck, LogOut, Compass, ClipboardList,
-  ChevronRight, CreditCard, Star
+  ChevronRight, CreditCard, Star, Users, MapPin,
+  BedDouble, ShieldCheck
 } from "lucide-react";
 import { useAuth } from "../../auth/AuthContext";
 
@@ -50,7 +51,7 @@ const roleTheme = {
 };
 
 function Sidebar() {
-  const { pathname }   = useLocation();
+  const { pathname }     = useLocation();
   const { user, logout } = useAuth();
   const theme = roleTheme[user?.role] || roleTheme.TOURIST;
 
@@ -80,15 +81,27 @@ function Sidebar() {
       { label: "Payments",     to: "/dashboard/hotel-payments",     icon: CreditCard },
       { label: "Reviews",      to: "/dashboard/hotel-reviews",      icon: Star },
     ],
-    ADMIN: [],
+    ADMIN: [
+      { label: "Overview",     to: "/dashboard/admin",              icon: ShieldCheck },
+      { label: "Users",        to: "/dashboard/admin/users",        icon: Users },
+      { label: "Guides",       to: "/dashboard/admin/guides",       icon: MapPin },
+      { label: "Hotels",       to: "/dashboard/admin/hotels",       icon: Building2 },
+      { label: "Bookings",     to: "/dashboard/admin/bookings",     icon: CalendarCheck },
+      { label: "Reservations", to: "/dashboard/admin/reservations", icon: BedDouble },
+      { label: "Payments",     to: "/dashboard/admin/payments",     icon: CreditCard },
+      { label: "Reviews",      to: "/dashboard/admin/reviews",      icon: Star },
+    ],
   };
 
-  const items   = [...commonItems, ...(roleItems[user?.role] || [])];
+  // ADMIN gets only admin items (no common items clutter)
+  const items = user?.role === "ADMIN"
+    ? roleItems.ADMIN
+    : [...commonItems, ...(roleItems[user?.role] || [])];
+
   const initial = user?.name?.charAt(0)?.toUpperCase() || "U";
 
   return (
     <>
-      {/* ── Scoped sidebar styles ── */}
       <style>{`
         .sidebar-root {
           background: var(--tz-sidebar-bg, #ffffff);
@@ -96,15 +109,12 @@ function Sidebar() {
           box-shadow: 2px 0 12px rgba(0,0,0,0.06);
           transition: background 0.3s ease, border-color 0.3s ease;
         }
-
         .sidebar-brand-divider {
           border-bottom: 1px solid var(--tz-border-soft, #f1f5f9);
         }
-
         .sidebar-section-label {
           color: var(--tz-text-faint, #94a3b8);
         }
-
         .sidebar-nav-idle {
           color: var(--tz-text-muted, #64748b);
         }
@@ -112,7 +122,6 @@ function Sidebar() {
           color: var(--tz-text, #1e293b);
           background: var(--tz-surface-2, #f8fafc);
         }
-
         .sidebar-logout {
           background: var(--tz-surface-2, #f8fafc);
           border: 1px solid var(--tz-border, #e2e8f0);
@@ -126,14 +135,11 @@ function Sidebar() {
         }
         .sidebar-logout:hover .logout-icon { transform: rotate(12deg); }
         .logout-icon { transition: transform 0.2s ease; }
-
-        /* 3D brand logo */
         .tz-brand-logo {
           background: linear-gradient(145deg, #3b82f6, #6366f1);
-          box-shadow: 0 3px 0px #1e3a8a, 0 6px 14px rgba(59,130,246,0.4), inset 0 1px 0 rgba(255,255,255,0.25);
+          box-shadow: 0 3px 0px #1e3a8a, 0 6px 14px rgba(59,130,246,0.4),
+                      inset 0 1px 0 rgba(255,255,255,0.25);
         }
-
-        /* bottom divider */
         .sidebar-bottom-divider {
           border-top: 1px solid var(--tz-border-soft, #f1f5f9);
         }
@@ -152,7 +158,7 @@ function Sidebar() {
                 TravelZone
               </h1>
               <p className="text-[10px] uppercase tracking-widest mt-0.5" style={{ color: "var(--tz-text-faint)" }}>
-                Platform
+                {user?.role === "ADMIN" ? "Admin Panel" : "Platform"}
               </p>
             </div>
           </div>
@@ -163,16 +169,17 @@ function Sidebar() {
           <div
             className="rounded-2xl px-4 py-3 flex items-center gap-3"
             style={{
-              background:   theme.active,
-              border:       `1px solid ${theme.border}`,
-              boxShadow:    `0 3px 0px ${theme.shadow.replace("0.35","0.12")}, 0 6px 16px ${theme.shadow.replace("0.35","0.08")}`,
+              background: theme.active,
+              border:     `1px solid ${theme.border}`,
+              boxShadow:  `0 3px 0px ${theme.shadow.replace("0.35","0.12")}, 0 6px 16px ${theme.shadow.replace("0.35","0.08")}`,
             }}
           >
-            {/* Avatar */}
             <div
-              className={`w-10 h-10 rounded-xl bg-gradient-to-br ${theme.gradient} flex items-center justify-center text-white font-black text-sm flex-shrink-0`}
+              className={`w-10 h-10 rounded-xl bg-gradient-to-br ${theme.gradient} flex items-center justify-content-center text-white font-black text-sm flex-shrink-0`}
               style={{
-                boxShadow: `0 3px 0px ${theme.floor}, 0 6px 12px ${theme.shadow}, inset 0 1px 0 rgba(255,255,255,0.25)`,
+                boxShadow: `0 3px 0px ${theme.floor}, 0 6px 12px ${theme.shadow},
+                            inset 0 1px 0 rgba(255,255,255,0.25)`,
+                display: "flex", alignItems: "center", justifyContent: "center",
               }}
             >
               {initial}
@@ -184,9 +191,9 @@ function Sidebar() {
               <span
                 className="text-[10px] font-bold px-2 py-0.5 rounded-full"
                 style={{
-                  background:  theme.badge.bg,
-                  color:       theme.badge.color,
-                  border:      `1px solid ${theme.badge.border}`,
+                  background: theme.badge.bg,
+                  color:      theme.badge.color,
+                  border:     `1px solid ${theme.badge.border}`,
                 }}
               >
                 {user?.role?.replace("_", " ")}
@@ -198,7 +205,7 @@ function Sidebar() {
         {/* ── Nav items ── */}
         <nav className="flex-1 px-3 py-2 space-y-0.5">
           <p className="text-[10px] uppercase tracking-widest px-3 py-2 font-bold sidebar-section-label">
-            Menu
+            {user?.role === "ADMIN" ? "Admin Menu" : "Menu"}
           </p>
 
           {items.map((item) => {
@@ -230,7 +237,7 @@ function Sidebar() {
 
                 {/* Icon */}
                 <div
-                  className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-all`}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-all"
                   style={active ? {
                     background: theme.active,
                     border:     `1px solid ${theme.border}`,
