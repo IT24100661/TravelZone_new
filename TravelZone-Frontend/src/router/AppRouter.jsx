@@ -16,9 +16,18 @@ import MyHotelsPage from "../pages/dashboard/hotel/MyHotelsPage";
 import ManageRoomsPage from "../pages/dashboard/hotel/ManageRoomsPage";
 import HotelReservationsPage from "../pages/dashboard/hotel/HotelReservationsPage";
 import HomePage from "../pages/public/HomePage";
-// ✅ NEW imports
 import PaymentsPage from "../pages/dashboard/payments/PaymentsPage";
 import ReviewsPage from "../pages/dashboard/reviews/ReviewsPage";
+
+// ── Admin imports ────────────────────────────────────────
+import AdminOverviewPage     from "../pages/dashboard/admin/AdminOverviewPage";
+import AdminUsersPage        from "../pages/dashboard/admin/AdminUsersPage";
+import AdminGuidesPage       from "../pages/dashboard/admin/AdminGuidesPage";
+import AdminHotelsPage       from "../pages/dashboard/admin/AdminHotelsPage";
+import AdminBookingsPage     from "../pages/dashboard/admin/AdminBookingsPage";
+import AdminReservationsPage from "../pages/dashboard/admin/AdminReservationsPage";
+import AdminPaymentsPage     from "../pages/dashboard/admin/AdminPaymentsPage";
+import AdminReviewsPage      from "../pages/dashboard/admin/AdminReviewsPage";
 
 function AppRouter() {
   return (
@@ -35,26 +44,36 @@ function AppRouter() {
         <Route path="profile" element={<ProfilePage />} />
 
         {/* ── Tourist ─────────────────────────────── */}
-        <Route path="guides"            element={<GuidesPage />} />
-        <Route path="guides/:guideId"   element={<GuideDetailPage />} />
-        <Route path="hotels"            element={<HotelsPage />} />
-        <Route path="hotels/:hotelId"   element={<HotelDetailPage />} />
-        <Route path="bookings"          element={<MyBookingsPage />} />
-        <Route path="payments"          element={<PaymentsPage />} />   {/* ✅ NEW */}
-        <Route path="my-reviews"        element={<ReviewsPage />} />    {/* ✅ NEW */}
+        <Route path="guides"             element={<GuidesPage />} />
+        <Route path="guides/:guideId"    element={<GuideDetailPage />} />
+        <Route path="hotels"             element={<HotelsPage />} />
+        <Route path="hotels/:hotelId"    element={<HotelDetailPage />} />
+        <Route path="bookings"           element={<MyBookingsPage />} />
+        <Route path="payments"           element={<PaymentsPage />} />
+        <Route path="my-reviews"         element={<ReviewsPage />} />
 
         {/* ── Guide ───────────────────────────────── */}
-        <Route path="guide-profile"     element={<GuideProfilePage />} />
-        <Route path="guide-bookings"    element={<GuideBookingRequestsPage />} />
-        <Route path="guide-payments"    element={<PaymentsPage />} />   {/* ✅ NEW */}
-        <Route path="guide-reviews"     element={<ReviewsPage />} />    {/* ✅ NEW */}
+        <Route path="guide-profile"      element={<GuideProfilePage />} />
+        <Route path="guide-bookings"     element={<GuideBookingRequestsPage />} />
+        <Route path="guide-payments"     element={<PaymentsPage />} />
+        <Route path="guide-reviews"      element={<ReviewsPage />} />
 
         {/* ── Hotel Owner ─────────────────────────── */}
-        <Route path="my-hotels"         element={<MyHotelsPage />} />
-        <Route path="rooms"             element={<ManageRoomsPage />} />
+        <Route path="my-hotels"          element={<MyHotelsPage />} />
+        <Route path="rooms"              element={<ManageRoomsPage />} />
         <Route path="hotel-reservations" element={<HotelReservationsPage />} />
-        <Route path="hotel-payments"    element={<PaymentsPage />} />   {/* ✅ NEW */}
-        <Route path="hotel-reviews"     element={<ReviewsPage />} />    {/* ✅ NEW */}
+        <Route path="hotel-payments"     element={<PaymentsPage />} />
+        <Route path="hotel-reviews"      element={<ReviewsPage />} />
+
+        {/* ── Admin ───────────────────────────────── */}
+        <Route path="admin"              element={<AdminOverviewPage />} />
+        <Route path="admin/users"        element={<AdminUsersPage />} />
+        <Route path="admin/guides"       element={<AdminGuidesPage />} />
+        <Route path="admin/hotels"       element={<AdminHotelsPage />} />
+        <Route path="admin/bookings"     element={<AdminBookingsPage />} />
+        <Route path="admin/reservations" element={<AdminReservationsPage />} />
+        <Route path="admin/payments"     element={<AdminPaymentsPage />} />
+        <Route path="admin/reviews"      element={<AdminReviewsPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

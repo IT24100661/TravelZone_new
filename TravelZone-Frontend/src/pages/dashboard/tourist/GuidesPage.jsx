@@ -17,152 +17,208 @@ function GuidesPage() {
       const params = new URLSearchParams({ page: p, size: 9 });
       if (filters.location) params.append("location", filters.location);
       if (filters.language) params.append("language", filters.language);
-      if (filters.rating) params.append("rating", filters.rating);
+      if (filters.rating)   params.append("rating",   filters.rating);
       const res = await api.get(`/api/guides?${params}`);
       setGuides(res.data.content || []);
       setTotalPages(res.data.totalPages || 0);
       setPage(p);
-    } catch {
-      setGuides([]);
-    } finally {
-      setLoading(false);
-    }
+    } catch { setGuides([]); }
+    finally  { setLoading(false); }
   };
 
   useEffect(() => { fetchGuides(); }, []);
 
-  const handleSearch = (e) => { e.preventDefault(); fetchGuides(0); };
-
   return (
     <div>
+      {/* ── Header ── */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-800">Browse Guides</h1>
-        <p className="text-slate-500 text-sm mt-0.5">Find the perfect local guide for your journey</p>
+        <h1 className="text-2xl font-bold text-[var(--tz-text)]">Browse Guides</h1>
+        <p className="text-[var(--tz-text-muted)] text-sm mt-0.5">Find the perfect local guide for your journey</p>
       </div>
 
-      {/* Filters */}
-      <form onSubmit={handleSearch} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 mb-6 flex flex-wrap gap-3 items-end">
+      {/* ── Filter bar ── */}
+      <form
+        onSubmit={(e) => { e.preventDefault(); fetchGuides(0); }}
+        className="rounded-2xl border p-4 mb-6 flex flex-wrap gap-3 items-end"
+        style={{
+          background:  "var(--tz-card-bg)",
+          borderColor: "var(--tz-card-border)",
+          boxShadow:   "0 3px 0px rgba(0,0,0,0.08), 0 6px 16px rgba(0,0,0,0.06)",
+        }}
+      >
+        {/* Location */}
         <div className="flex-1 min-w-[150px]">
-          <label className="block text-xs text-slate-500 mb-1 font-medium">Location</label>
+          <label className="block text-xs text-[var(--tz-text-muted)] mb-1 font-medium">Location</label>
           <div className="relative">
-            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
+            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--tz-text-faint)]" size={15} />
             <input
               value={filters.location}
               onChange={(e) => setFilters((p) => ({ ...p, location: e.target.value }))}
-              className="w-full border border-slate-200 rounded-xl pl-8 pr-3 py-2 text-sm outline-none focus:border-blue-400 transition"
+              className="w-full rounded-xl pl-8 pr-3 py-2 text-sm outline-none transition border"
+              style={{ background: "var(--tz-input-bg)", borderColor: "var(--tz-input-border)", color: "var(--tz-text)" }}
               placeholder="e.g. Colombo"
             />
           </div>
         </div>
+
+        {/* Language */}
         <div className="flex-1 min-w-[150px]">
-          <label className="block text-xs text-slate-500 mb-1 font-medium">Language</label>
+          <label className="block text-xs text-[var(--tz-text-muted)] mb-1 font-medium">Language</label>
           <input
             value={filters.language}
             onChange={(e) => setFilters((p) => ({ ...p, language: e.target.value }))}
-            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-400 transition"
+            className="w-full rounded-xl px-3 py-2 text-sm outline-none transition border"
+            style={{ background: "var(--tz-input-bg)", borderColor: "var(--tz-input-border)", color: "var(--tz-text)" }}
             placeholder="e.g. English"
           />
         </div>
+
+        {/* Min Rating */}
         <div className="flex-1 min-w-[130px]">
-          <label className="block text-xs text-slate-500 mb-1 font-medium">Min Rating</label>
+          <label className="block text-xs text-[var(--tz-text-muted)] mb-1 font-medium">Min Rating</label>
           <div className="relative">
-            <Star className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
+            <Star className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--tz-text-faint)]" size={15} />
             <input
-              type="number"
-              min="0"
-              max="5"
-              step="0.1"
+              type="number" min="0" max="5" step="0.1"
               value={filters.rating}
               onChange={(e) => setFilters((p) => ({ ...p, rating: e.target.value }))}
-              className="w-full border border-slate-200 rounded-xl pl-8 pr-3 py-2 text-sm outline-none focus:border-blue-400 transition"
+              className="w-full rounded-xl pl-8 pr-3 py-2 text-sm outline-none transition border"
+              style={{ background: "var(--tz-input-bg)", borderColor: "var(--tz-input-border)", color: "var(--tz-text)" }}
               placeholder="0 – 5"
             />
           </div>
         </div>
-        <button
-          type="submit"
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-xl text-sm font-semibold transition shadow-md shadow-blue-200"
-        >
+
+        <button type="submit" className="btn-3d-blue">
           <Search size={15} />
-          Search
+          <span>Search</span>
         </button>
       </form>
 
-      {/* Results */}
+      {/* ── Results ── */}
       {loading ? (
         <div className="flex items-center justify-center h-48">
           <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : guides.length === 0 ? (
-        <div className="bg-white rounded-3xl border border-slate-200 p-16 text-center">
-          <User size={48} className="mx-auto text-slate-300 mb-4" />
-          <h3 className="text-slate-600 font-semibold">No guides found</h3>
-          <p className="text-slate-400 text-sm mt-1">Try adjusting your search filters</p>
-        </div>
+        <EmptyState icon={User} message="No guides found" sub="Try adjusting your search filters" />
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {guides.map((guide) => (
-              <div
-                key={guide.guideId}
-                onClick={() => navigate(`/dashboard/guides/${guide.guideId}`)}
-                className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer group overflow-hidden"
-              >
-                <div className="h-32 bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-                  {guide.profilePhoto ? (
-                    <img
-                      src={guide.profilePhoto}
-                      alt={guide.name}
-                      className="w-24 h-24 rounded-full object-cover border-4 border-white shadow"
-                    />
-                  ) : (
-                    <div className="w-20 h-20 rounded-full bg-blue-200 flex items-center justify-center text-blue-600 font-bold text-2xl">
-                      {guide.name?.charAt(0)}
-                    </div>
-                  )}
-                </div>
-                <div className="p-4">
-                  <h3 className="font-bold text-slate-800 group-hover:text-blue-600 transition">
-                    {guide.name}
-                  </h3>
-                  <div className="flex items-center justify-between mt-2">
-                    <span className="flex items-center gap-1 text-amber-500 text-sm font-semibold">
-                      <Star size={14} fill="currentColor" />
-                      {guide.rating?.toFixed(1) || "0.0"}
-                    </span>
-                    {/* ✅ Changed $ to LKR */}
-                    <span className="text-emerald-600 text-sm font-semibold">
-                      LKR {parseFloat(guide.pricePerDay).toLocaleString()}/day
-                    </span>
-                  </div>
-                  <button className="mt-3 w-full bg-blue-50 group-hover:bg-blue-600 group-hover:text-white text-blue-600 text-sm py-2 rounded-xl font-semibold transition">
-                    View Profile
-                  </button>
-                </div>
-              </div>
+              <GuideCard key={guide.guideId} guide={guide} onClick={() => navigate(`/dashboard/guides/${guide.guideId}`)} />
             ))}
           </div>
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex justify-center gap-2 mt-8">
+            <div className="flex justify-center gap-2 mt-8 flex-wrap">
               {Array.from({ length: totalPages }, (_, i) => (
                 <button
                   key={i}
                   onClick={() => fetchGuides(i)}
-                  className={`w-9 h-9 rounded-xl text-sm font-semibold transition ${
-                    i === page
-                      ? "bg-blue-600 text-white"
-                      : "bg-white border border-slate-200 text-slate-600 hover:border-blue-400"
-                  }`}
+                  className={i === page ? "btn-3d-blue" : "btn-3d-slate"}
+                  style={{ padding: "0.45rem 0.9rem", minWidth: "2.25rem" }}
                 >
-                  {i + 1}
+                  <span>{i + 1}</span>
                 </button>
               ))}
             </div>
           )}
         </>
       )}
+    </div>
+  );
+}
+
+/* ── Guide Card ── */
+function GuideCard({ guide, onClick }) {
+  return (
+    <div
+      onClick={onClick}
+      className="group rounded-2xl border overflow-hidden cursor-pointer transition-all duration-200"
+      style={{
+        background:  "var(--tz-card-bg)",
+        borderColor: "var(--tz-card-border)",
+        boxShadow:   "0 4px 0px rgba(0,0,0,0.10), 0 6px 18px rgba(0,0,0,0.08)",
+        transform:   "translateY(-2px)",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform  = "translateY(-6px)";
+        e.currentTarget.style.boxShadow  = "0 8px 0px rgba(0,0,0,0.14), 0 16px 32px rgba(0,0,0,0.14)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform  = "translateY(-2px)";
+        e.currentTarget.style.boxShadow  = "0 4px 0px rgba(0,0,0,0.10), 0 6px 18px rgba(0,0,0,0.08)";
+      }}
+    >
+      {/* Banner */}
+      <div className="h-32 bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center relative overflow-hidden">
+        {/* Gloss */}
+        <div className="absolute top-0 left-0 right-0 h-1/2 pointer-events-none"
+          style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.18) 0%, transparent 100%)" }}
+        />
+        <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none" />
+
+        {guide.profilePhoto ? (
+          <img src={guide.profilePhoto} alt={guide.name}
+            className="w-20 h-20 rounded-2xl object-cover border-2 border-white/40 shadow-lg relative z-10"
+          />
+        ) : (
+          <div
+            className="w-20 h-20 rounded-2xl bg-white/20 border-2 border-white/30 flex items-center justify-center text-white text-3xl font-bold relative z-10 icon-3d"
+          >
+            {guide.name?.charAt(0)}
+          </div>
+        )}
+      </div>
+
+      {/* Info */}
+      <div className="p-4">
+        <h3 className="font-bold text-[var(--tz-text)] group-hover:text-blue-500 transition truncate">
+          {guide.name}
+        </h3>
+
+        {guide.location && (
+          <p className="flex items-center gap-1 text-[var(--tz-text-muted)] text-xs mt-1">
+            <MapPin size={12} /> {guide.location}
+          </p>
+        )}
+
+        <div className="flex items-center justify-between mt-2">
+          <span className="flex items-center gap-1 text-amber-500 text-sm font-semibold">
+            <Star size={14} fill="currentColor" />
+            {guide.rating?.toFixed(1) || "0.0"}
+          </span>
+          <span className="text-emerald-500 text-sm font-bold">
+            LKR {parseFloat(guide.pricePerDay).toLocaleString()}/day
+          </span>
+        </div>
+
+        {/* 3D View button */}
+        <button
+          className="btn-3d-blue mt-3 btn-3d-wide"
+          style={{ padding: "0.55rem 1rem" }}
+        >
+          <span>View Profile</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ── Empty State ── */
+function EmptyState({ icon: Icon, message, sub }) {
+  return (
+    <div
+      className="rounded-3xl border p-16 text-center"
+      style={{ background: "var(--tz-card-bg)", borderColor: "var(--tz-card-border)" }}
+    >
+      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center mx-auto mb-4 icon-3d">
+        <Icon size={32} className="text-[var(--tz-text-faint)]" />
+      </div>
+      <p className="text-[var(--tz-text)] font-semibold">{message}</p>
+      <p className="text-[var(--tz-text-muted)] text-sm mt-1">{sub}</p>
     </div>
   );
 }
